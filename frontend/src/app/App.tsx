@@ -17,9 +17,9 @@ export default function App() {
     setRoute(path);
   }, []);
 
-  if (route === '/customers' || route.startsWith('/customers/')) {
-    return <CustomerApp path={route} onNavigate={onNavigate} />;
+  if (route === '/admin' || route.startsWith('/admin/')) {
+    return <InventoryPage onNavigate={onNavigate} />;
   }
 
-  return <InventoryPage onNavigate={onNavigate} />;
+  return <CustomerApp path={route} onNavigate={onNavigate} />;
 }

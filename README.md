@@ -2,6 +2,8 @@
 
 Express and TypeScript APIs for the five supplied `public` tables, backed by Supabase. The API is organized into routes, controllers, services, Zod validators, and typed database models.
 
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step Vercel setup for the API and frontend.
+
 ## Getting started
 
 ```sh
