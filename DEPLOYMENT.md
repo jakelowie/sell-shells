@@ -8,7 +8,7 @@ You need:
 
 - A GitHub, GitLab, or Bitbucket repository containing this project, pushed with the latest changes.
 - A Vercel account connected to that Git provider.
-- A Supabase project with the schema and image storage migrations applied. Follow the root [README](README.md) for the required migrations, bucket, and Row Level Security configuration.
+- A Supabase project with the inventory schema, image storage setup, and role/RLS migration applied. Follow the root [README](README.md) for the required migrations and first-superadmin bootstrap.
 
 Do not commit `.env` files or paste Supabase secrets into frontend settings. Add secret values only to the backend Vercel project.
 
@@ -33,7 +33,7 @@ Do not commit `.env` files or paste Supabase secrets into frontend settings. Add
 
    - `https://<api-domain>/health` should return `{"status":"ok"}`.
    - `https://<api-domain>/api-docs.json` should return the OpenAPI document.
-   - `https://<api-domain>/api/shell-types?limit=1&offset=0` should return an API response. An empty `data` array is valid if the database has no types yet.
+   - `https://<api-domain>/api/shell-types?limit=1&offset=0` should return a paginated response without a Supabase session.
 
 If a route returns a server error, inspect the API project's **Deployments → Functions → Logs** and verify the Supabase environment variables and database policies. Environment variable changes apply to new deployments, so redeploy after changing them ([Vercel environment variables](https://vercel.com/docs/environment-variables)).
 
@@ -50,27 +50,29 @@ If a route returns a server error, inspect the API project's **Deployments → F
 
    These are the frontend's existing build script and Vite output directory ([Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite)).
 
-5. Add this environment variable to **Production** and **Preview**:
+5. Add these environment variables to **Production** and **Preview** for the staff admin login:
 
    | Name | Value |
    | --- | --- |
    | `VITE_API_BASE_URL` | The API deployment URL from step 1, with no trailing slash |
+   | `VITE_SUPABASE_URL` | Your Supabase project URL |
+   | `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase publishable key |
 
-   Example: `https://sell-shells-api.vercel.app`. Vite embeds `VITE_*` values into the browser bundle, so this variable must contain only the public API URL, never a secret.
+   Example API URL: `https://sell-shells-api.vercel.app`. Vite embeds `VITE_*` values into the browser bundle, so these must contain only public configuration and the publishable key, never a secret.
 
 6. Deploy. Open the frontend deployment and check `/` for the storefront and `/admin` for the inventory manager. The included `frontend/vercel.json` rewrite serves the SPA entry point for direct visits and refreshes on these routes.
 
 ## 3. Verify the deployed connection
 
-Open the browser developer tools on the frontend and confirm API requests go to the API deployment URL. Try loading shell types and shells, opening a shell detail page, and loading an image. If the browser reports a CORS error, confirm the backend deployment includes the CORS middleware and redeploy it. CORS currently allows all origins and preflight requests.
+Open the frontend without signing in and confirm shell types, shells, and signed image URLs load. Customer browsing is public. To enable the staff manager, provision staff accounts through Supabase Auth (Dashboard or invite), allow the frontend origin in Supabase Auth redirect URLs as needed, and bootstrap the first superadmin using the SQL instructions in the README. `/admin` and inventory mutations require `admin` or `superadmin`. If the browser reports a CORS error, confirm the backend deployment includes the CORS middleware and redeploy it. CORS currently allows all origins and preflight requests.
 
 The API applies a limit of 10 requests per second per client IP. Its counters are stored in process memory, so Vercel instances enforce their limits independently rather than sharing one global counter.
 
-## Current public-access and upload behavior
+## Access control and upload behavior
 
-- **The API is unauthenticated.** CORS allowing all origins means browsers on any site can call it, and the API currently permits public writes and deletes. Anyone who can reach the API can modify the collection. Treat this deployment as publicly writable until authentication or another access-control layer is added.
+- **Role enforcement is server-side and database-side.** Public catalog GET requests are allowed for the Supabase `anon` role by explicit RLS policies. Inventory writes require the API to verify Supabase access tokens and resolve roles from `public.user_roles`; RLS independently enforces write permissions. The frontend uses the publishable key only; the backend `SUPABASE_SECRET_KEY` remains server-side.
 - **Image upload size is constrained by Vercel.** The API currently accepts files up to 5 MB, but Vercel Functions impose a 4.5 MB request-body limit, including multipart overhead ([Vercel Function limits](https://vercel.com/docs/functions/limitations)). Files near 4.5 MB may fail before reaching Express. For reliable Vercel uploads, reduce the accepted file size to about 4 MB or use direct-to-Supabase uploads.
-- **Storage depends on Supabase.** Images are stored in the private `shell_images` bucket, and image responses use signed URLs. Confirm the bucket and policies are configured before testing uploads and image display.
+- **Storage depends on Supabase.** Images are stored in the private `shell_images` bucket, and image responses use signed URLs. Confirm the role/RLS migration and bucket are configured before testing uploads and image display.
 
 ## Updating either app
 

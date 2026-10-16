@@ -3,7 +3,7 @@
   "info": {
     "title": "sell-shells API",
     "version": "1.0.0",
-    "description": "OpenAPI specification for the sell-shells Express and TypeScript API, in JSON format. Database schema uses shell_id, image_id, stock_info_id, shell_stocks_info, and shell_type."
+    "description": "Public catalog GET requests for shells, shell types, and images allow anonymous browsing. Stock data and inventory writes require admin or superadmin authentication; role management requires superadmin."
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "servers": [
@@ -33,6 +33,12 @@
     },
     {
       "name": "Shell types"
+    },
+    {
+      "name": "Authentication"
+    },
+    {
+      "name": "Role management"
     }
   ],
   "paths": {
@@ -272,7 +278,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shells/{id}": {
@@ -420,7 +431,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -488,7 +504,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-stock-types": {
@@ -606,7 +627,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -673,7 +699,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-stock-types/{id}": {
@@ -744,7 +775,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "patch": {
         "tags": [
@@ -821,7 +857,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -889,7 +930,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/stock-info": {
@@ -1022,7 +1068,12 @@
             }
           }
         },
-        "description": "Backward-compatible alias for /api/shell-stocks-info."
+        "description": "Backward-compatible alias for /api/shell-stocks-info.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -1090,7 +1141,12 @@
             }
           }
         },
-        "description": "Backward-compatible alias for /api/shell-stocks-info."
+        "description": "Backward-compatible alias for /api/shell-stocks-info.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/stock-info/{id}": {
@@ -1161,7 +1217,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "patch": {
         "tags": [
@@ -1238,7 +1299,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -1305,7 +1371,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-images": {
@@ -1539,7 +1610,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-images/{id}": {
@@ -1687,7 +1763,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -1764,7 +1845,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/health": {
@@ -1884,7 +1970,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-stocks-info": {
@@ -2016,7 +2107,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -2083,7 +2179,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-stocks-info/{id}": {
@@ -2154,7 +2255,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "patch": {
         "tags": [
@@ -2231,7 +2337,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -2298,7 +2409,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-types": {
@@ -2483,7 +2599,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/shell-types/{id}": {
@@ -2631,7 +2752,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -2698,6 +2824,170 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "operationId": "getCurrentAccount",
+        "summary": "Get current account and current database role",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AuthenticatedAccount"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session."
+          },
+          "403": {
+            "description": "Missing or invalid role record."
+          },
+          "503": {
+            "description": "Role verification unavailable."
+          }
+        }
+      }
+    },
+    "/api/auth/users": {
+      "get": {
+        "tags": [
+          "Role management"
+        ],
+        "operationId": "listUserRoles",
+        "summary": "List registered accounts and roles",
+        "description": "Superadmin only. Lists role records synchronized with Supabase Auth users.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registered account role assignments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserRole"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session."
+          },
+          "403": {
+            "description": "Requires superadmin role."
+          }
+        }
+      }
+    },
+    "/api/auth/users/{userId}/role": {
+      "patch": {
+        "tags": [
+          "Role management"
+        ],
+        "operationId": "assignUserRole",
+        "summary": "Assign a role to another account",
+        "description": "Superadmin only. The current account cannot change its own role. The last superadmin cannot be demoted.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Supabase Auth user UUID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleAssignment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role assignment updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserRole"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid role."
+          },
+          "401": {
+            "description": "Missing or invalid session."
+          },
+          "403": {
+            "description": "Requires superadmin; self-assignment is forbidden."
+          },
+          "404": {
+            "description": "Account does not exist."
+          },
+          "409": {
+            "description": "Assignment would remove the last superadmin."
           }
         }
       }
@@ -3320,6 +3610,92 @@
           }
         ],
         "minProperties": 1
+      },
+      "AppRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "admin",
+          "superadmin"
+        ]
+      },
+      "AuthenticatedAccount": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/AppRole"
+          }
+        }
+      },
+      "UserRole": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "role",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/AppRole"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RoleAssignment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/AppRole"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase Auth access token."
       }
     }
   }

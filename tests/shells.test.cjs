@@ -5,6 +5,13 @@ const http = require("node:http");
 const shellId = "11111111-1111-4111-8111-111111111111";
 const stockTypeId = "33333333-3333-4333-8333-333333333333";
 const shellImageId = "55555555-5555-4555-8555-555555555555";
+const appUsers = {
+  "user-token": { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", email: "reader@example.com" },
+  "admin-token": { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", email: "admin@example.com" },
+  "superadmin-token": { id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", email: "superadmin@example.com" },
+  "no-role-token": { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", email: "norole@example.com" },
+  "invalid-role-token": { id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", email: "invalidrole@example.com" }
+};
 const ids = {
   shell_description: "22222222-2222-4222-8222-222222222222",
   shell_stock_type: "44444444-4444-4444-8444-444444444444",
@@ -21,6 +28,7 @@ let failNextShellImageInsert;
 let failNextStorageUpload;
 let signedTtls;
 let shellImageNextNumber;
+let lastApiRequestAt = 0;
 
 function sendJson(response, status, payload, headers = {}) {
   response.writeHead(status, { "content-type": "application/json", ...headers });
@@ -40,6 +48,16 @@ async function readBody(request) {
 function databaseHandler(request, response) {
   void (async () => {
     const url = new URL(request.url, "http://127.0.0.1");
+    if (url.pathname === "/auth/v1/user") {
+      const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
+      const user = appUsers[token];
+      if (!user) {
+        sendJson(response, 401, { message: "Invalid token" });
+        return;
+      }
+      sendJson(response, 200, { ...user, aud: "authenticated", role: "authenticated" });
+      return;
+    }
     if (url.pathname.startsWith("/storage/v1/object/sign/shell_images/")) {
       const path = decodeURIComponent(url.pathname.slice("/storage/v1/object/sign/shell_images/".length));
       const signedRequest = await readBody(request);
@@ -83,12 +101,43 @@ function databaseHandler(request, response) {
       }
     }
     const table = url.pathname.slice("/rest/v1/".length);
+    const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
+    const authUser = appUsers[token];
+    const authRole = records.user_roles.find((row) => row.user_id === authUser?.id)?.role;
+    if (table === "rpc/assign_user_role" && request.method === "POST") {
+      const assignment = await readBody(request);
+      if (authRole !== "superadmin") {
+        sendDbError(response, 403, "42501", "Only a superadmin can assign roles.");
+        return;
+      }
+      if (assignment.target_user_id === authUser.id) {
+        sendDbError(response, 403, "42501", "You cannot change your own role.");
+        return;
+      }
+      const target = records.user_roles.find((row) => row.user_id === assignment.target_user_id);
+      if (!target) {
+        sendDbError(response, 404, "PGRST116", "The target user role record was not found.");
+        return;
+      }
+      target.role = assignment.new_role;
+      target.updated_at = new Date().toISOString();
+      sendJson(response, 200, target);
+      return;
+    }
     if (!Object.hasOwn(records, table)) {
       sendDbError(response, 404, "PGRST205", "Table not found");
       return;
     }
 
     const rows = records[table];
+    if (table === "user_roles" && authRole !== "superadmin" && request.method !== "GET") {
+      sendDbError(response, 403, "42501", "Role assignments are managed only through the superadmin function.");
+      return;
+    }
+    if (table !== "user_roles" && authRole === "user" && ["POST", "PATCH", "DELETE"].includes(request.method)) {
+      sendDbError(response, 403, "42501", "Only admins can mutate inventory.");
+      return;
+    }
     const idColumn = table === "shell_stock_type" ? "stock_id"
       : table === "shell_type" ? "type_id"
         : table === "shell_description" ? "shell_id"
@@ -209,7 +258,13 @@ before(async () => {
     shell_stock_type: [{ stock_id: stockTypeId, created_at: "2026-10-13T00:00:00.000Z", stock_name: "Bulk" }],
     shell_type: [{ type_id: ids.shell_type, created_at: "2026-10-13T00:00:00.000Z", shell_type_name: "Cowrie" }],
     shell_stocks_info: [{ stock_info_id: 101, created_at: "2026-10-13T00:00:00.000Z", shell_id: shellId, shell_stock_id: stockTypeId, shell_stock: 2.5, shell_pcs_per_stock: 12, shell_total_available: 30 }],
-    shell_images: [{ image_id: shellImageId, created_at: "2026-10-13T00:00:00.000Z", file_name: "tiger-cowrie.jpg", storage_path: null, is_main_image: false, shell_id: shellId }]
+    shell_images: [{ image_id: shellImageId, created_at: "2026-10-13T00:00:00.000Z", file_name: "tiger-cowrie.jpg", storage_path: null, is_main_image: false, shell_id: shellId }],
+    user_roles: [
+      { user_id: appUsers["user-token"].id, email: appUsers["user-token"].email, role: "user", created_at: "2026-10-15T00:00:00.000Z", updated_at: "2026-10-15T00:00:00.000Z" },
+      { user_id: appUsers["admin-token"].id, email: appUsers["admin-token"].email, role: "admin", created_at: "2026-10-15T00:00:00.000Z", updated_at: "2026-10-15T00:00:00.000Z" },
+      { user_id: appUsers["superadmin-token"].id, email: appUsers["superadmin-token"].email, role: "superadmin", created_at: "2026-10-15T00:00:00.000Z", updated_at: "2026-10-15T00:00:00.000Z" },
+      { user_id: appUsers["invalid-role-token"].id, email: appUsers["invalid-role-token"].email, role: "owner", created_at: "2026-10-15T00:00:00.000Z", updated_at: "2026-10-15T00:00:00.000Z" }
+    ]
   };
   stockInfoNextId = 102;
   storageObjects = new Map();
@@ -239,14 +294,59 @@ after(async () => {
 });
 
 async function api(path, options = {}) {
-  const isFormData = options.body instanceof FormData;
+  const waitMs = Math.max(0, 120 - (Date.now() - lastApiRequestAt));
+  if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
+  lastApiRequestAt = Date.now();
+  const { token = "admin-token", ...fetchOptions } = options;
+  const isFormData = fetchOptions.body instanceof FormData;
   const response = await fetch(`${apiUrl}${path}`, {
-    ...options,
-    headers: { ...(isFormData ? {} : { "content-type": "application/json" }), ...options.headers },
-    body: options.body ? (isFormData ? options.body : JSON.stringify(options.body)) : undefined
+    ...fetchOptions,
+    headers: { ...(isFormData ? {} : { "content-type": "application/json" }), ...(token ? { authorization: `Bearer ${token}` } : {}), ...fetchOptions.headers },
+    body: fetchOptions.body ? (isFormData ? fetchOptions.body : JSON.stringify(fetchOptions.body)) : undefined
   });
   return { status: response.status, body: await response.json() };
 }
+
+test("public catalog reads need no customer login while inventory writes and role assignment stay protected", async () => {
+  assert.equal((await api("/api/shells", { token: null })).status, 200);
+  assert.equal((await api("/api/shell-types", { token: null })).status, 200);
+  assert.equal((await api("/api/shell-images", { token: null })).status, 200);
+  assert.equal((await api("/api/shell-stock-types", { token: null })).status, 401);
+  assert.equal((await api("/api/shell-stocks-info", { token: null })).status, 401);
+  assert.equal((await api("/api/shell-stock-types", { token: "user-token" })).status, 403);
+  assert.equal((await api("/api/shell-stocks-info", { token: "user-token" })).status, 403);
+  assert.equal((await api("/api/shells", { method: "POST", token: null, body: { shell_name: "Anonymous write" } })).status, 401);
+  assert.equal((await api("/api/shells", { token: "invalid-token" })).status, 401);
+  assert.equal((await api("/api/auth/me", { token: "no-role-token" })).status, 403);
+  assert.equal((await api("/api/auth/me", { token: "invalid-role-token" })).status, 403);
+
+  const me = await api("/api/auth/me", { token: "user-token" });
+  assert.equal(me.status, 200);
+  assert.equal(me.body.data.role, "user");
+  assert.equal((await api("/api/shells", { token: "user-token" })).status, 200);
+  assert.equal((await api("/api/shells", { method: "POST", token: "user-token", body: { shell_name: "No write access" } })).status, 403);
+  assert.equal((await api("/api/auth/users", { token: "admin-token" })).status, 403);
+  assert.equal((await api("/api/auth/users", { token: "superadmin-token" })).status, 200);
+
+  const cannotSelfPromote = await api(`/api/auth/users/${appUsers["user-token"].id}/role`, {
+    method: "PATCH", token: "user-token", body: { role: "superadmin" }
+  });
+  assert.equal(cannotSelfPromote.status, 403);
+  const cannotSelfChange = await api(`/api/auth/users/${appUsers["superadmin-token"].id}/role`, {
+    method: "PATCH", token: "superadmin-token", body: { role: "user" }
+  });
+  assert.equal(cannotSelfChange.status, 403);
+  const invalidRole = await api(`/api/auth/users/${appUsers["user-token"].id}/role`, {
+    method: "PATCH", token: "superadmin-token", body: { role: "owner" }
+  });
+  assert.equal(invalidRole.status, 400);
+
+  const promoted = await api(`/api/auth/users/${appUsers["user-token"].id}/role`, {
+    method: "PATCH", token: "superadmin-token", body: { role: "admin" }
+  });
+  assert.equal(promoted.status, 200);
+  assert.equal(promoted.body.data.role, "admin");
+});
 
 test("health and shell description CRUD use Supabase", async () => {
   assert.deepEqual(await (await fetch(`${apiUrl}/health`)).json(), { status: "ok" });

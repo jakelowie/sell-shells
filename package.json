@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
+    "build:frontend": "npm --prefix frontend run build",
     "start": "node dist/server.js",
     "test": "npm run build && node --experimental-test-isolation=none --test"
   },

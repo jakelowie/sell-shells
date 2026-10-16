@@ -1,6 +1,6 @@
 # sell-shells
 
-Express and TypeScript APIs for the five supplied `public` tables, backed by Supabase. The API is organized into routes, controllers, services, Zod validators, and typed database models.
+Express and TypeScript APIs for the five inventory tables, backed by Supabase. Authentication adds a protected `public.user_roles` table linked to Supabase Auth users. The API is organized into routes, controllers, services, Zod validators, and typed database models.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step Vercel setup for the API and frontend.
 
@@ -13,11 +13,35 @@ Copy-Item .env.example .env
 
 Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and the server-only `SUPABASE_SECRET_KEY` in `.env`. Keep `.env` private; it is excluded from Git. The publishable key uses the project's grants and Row Level Security policies for database access. The secret key is used only by the server for private Storage uploads, deletion, and signed URL generation. Never expose it in a frontend or API response. The API listens on `http://localhost:3000` by default; set `PORT` to change it.
 
+For staff sign-in, copy `frontend/.env.example` to `frontend/.env` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to the same project URL and publishable key. These browser settings are public by design; never set `SUPABASE_SECRET_KEY` in the frontend. Public shell browsing does not require these frontend Auth settings.
+
 Before using image uploads, run the SQL migrations in `supabase/migrations` in the Supabase SQL editor. They add the `storage_path` and `is_main_image` columns and configure the private `shell_images` bucket with a 5 MB limit and supported image MIME types. Database RLS must allow the API's publishable-key role to select and insert `shell_images` rows (and update/delete if those endpoints are used). Signed URL lifetime defaults to one hour and can be set with `SUPABASE_SIGNED_URL_TTL_SECONDS` from 60 to 604800 seconds.
 
 ```sh
 npm run dev
 ```
+
+In a second terminal, run the frontend:
+
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+## Authentication and role permissions
+
+Customer browsing is public and does not create a customer login. The shell descriptions, shell types, and shell image metadata used by the storefront can be read anonymously through API GET endpoints and matching database RLS policies. Stock types and stock quantities remain staff-only. Inventory mutations require a staff Supabase session: Express verifies the token, resolves the current role from `public.user_roles`, and passes the token to PostgREST so RLS independently checks writes.
+
+- `user` — can browse the public shell catalog and cannot read operational stock data or change inventory.
+- `admin` — read and make inventory changes, including shell images; cannot manage account roles.
+- `superadmin` — all admin inventory permissions plus role assignment and database column metadata access.
+
+The frontend hides routes and actions users cannot access, but the API and RLS enforce the same permissions independently. New Supabase Auth users receive `user` from a database trigger. The migration also backfills existing accounts as `user` without changing any existing role row. The `user_roles` table cannot be changed directly by clients; the role assignment RPC permits only a superadmin, blocks self-changes, and prevents removing the last superadmin.
+
+Apply `supabase/migrations/20261016000000_auth_roles_and_rls.sql` after the existing schema migrations, then apply `supabase/migrations/20261016010000_public_catalog_reads.sql` if the role migration was already applied. Anonymous reads are limited to `shell_description`, `shell_type`, and `shell_images`; stock-type and stock-quantity data stay staff-only. The migrations create the `app_role` enum and `user_roles` table, enable RLS on inventory tables, and restrict writes by role. Provision staff accounts through Supabase Auth (for example, invite them from the Dashboard). For the initial superadmin, replace the placeholder email in `supabase/bootstrap/first_superadmin.sql` and run that one-time script in the trusted SQL Editor after the staff account has been created. Afterward, superadmins can assign `user`, `admin`, or `superadmin` to other accounts at `/admin/users`. Role changes cannot target the currently signed-in account.
+
+The public storefront is available at `/` and `/customers` without an account. `/sign-in` is for staff; `/admin` requires the `admin` or `superadmin` role. A signed-in `user` can still browse, but receives an access-denied state in the admin area. Staff sign-in and role verification show loading states while the session is restored.
 
 ## CRUD endpoints
 
@@ -33,7 +57,7 @@ Collection routes support `limit` (1–100, default 50), `offset` (default 0), `
 
 The APIs validate request bodies, path IDs, and query parameters with **Zod**. Database defaults are omitted safely when fields aren’t supplied. Foreign-key and uniqueness errors are returned as `409`; malformed or invalid values are `400`; missing records are `404`.
 
-The API currently allows cross-origin browser requests from any origin (`Access-Control-Allow-Origin: *`) and answers preflight `OPTIONS` requests. This is CORS configuration, not authentication: API routes remain publicly accessible, including write and delete operations.
+The API allows cross-origin browser requests and answers preflight `OPTIONS` requests. Health, OpenAPI documentation, and GET requests for shell descriptions, shell types, and shell images are public. Stock type and quantity APIs require a valid staff session. Inventory mutations require an admin or superadmin session; metadata reads require the superadmin role.
 
 Requests are limited to 10 per client IP in each one-second window. CORS preflight `OPTIONS` requests are excluded. The current limiter keeps counters in process memory, so when deployed as serverless functions each running instance enforces its own limit; use a shared rate-limit store for a globally consistent limit across instances.
 
@@ -43,7 +67,7 @@ Requests are limited to 10 per client IP in each one-second window. CORS preflig
 
 ## Insomnia
 
-Import [sell-shells.insomnia.json](sell-shells.insomnia.json) for ready-made requests across all five tables. After creating records, copy returned IDs into the collection environment. `shell_id`, `shell_stock_type_id`, and `shell_type_id` in relational requests must refer to rows that exist in your project.
+Import [sell-shells.insomnia.json](sell-shells.insomnia.json) for ready-made requests across all five inventory tables and the auth role endpoints. After signing in, paste the Supabase access token into the base environment's `supabase_access_token`. Role-management requests require a superadmin token. After creating records, copy returned IDs into the collection environment. `shell_id`, `shell_stock_type_id`, and `shell_type_id` in relational requests must refer to rows that exist in your project.
 
 ## Swagger / OpenAPI
 

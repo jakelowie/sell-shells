@@ -29,7 +29,9 @@
         "shell_stock_type_id": "33333333-3333-4333-8333-333333333333",
         "stock_info_id": "101",
         "shell_type_id": "88888888-8888-4888-8888-888888888888",
-        "image_id": "55555555-5555-4555-8555-555555555555"
+        "image_id": "55555555-5555-4555-8555-555555555555",
+        "supabase_access_token": "paste-supabase-access-token-here",
+        "role_target_user_id": "77777777-7777-4777-8777-777777777777"
       },
       "_type": "environment",
       "color": null,
@@ -72,7 +74,13 @@
       "description": "Lists shell_description rows where is_deleted is not true.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_1"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -98,7 +106,13 @@
       "description": "Replace shell_id in the environment with an existing row UUID.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_2"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -129,6 +143,11 @@
       },
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_3"
+        },
+        {
           "name": "Content-Type",
           "value": "application/json"
         }
@@ -158,7 +177,13 @@
       "description": "Sets is_deleted to true; it does not physically remove the row.",
       "method": "DELETE",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_4"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -184,7 +209,13 @@
       "description": "Requires SUPABASE_SECRET_KEY to be configured on the API server.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_5"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -215,6 +246,11 @@
       },
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_6"
+        },
+        {
           "name": "Content-Type",
           "value": "application/json"
         }
@@ -244,7 +280,13 @@
       "description": "Paginated shell stock type collection.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_7"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -270,7 +312,13 @@
       "description": "Replace shell_stock_type_id with a returned stock_id.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_8"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -300,6 +348,11 @@
         "mimeType": "application/json"
       },
       "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_9"
+        },
         {
           "name": "Content-Type",
           "value": "application/json"
@@ -335,6 +388,11 @@
       },
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_10"
+        },
+        {
           "name": "Content-Type",
           "value": "application/json"
         }
@@ -364,7 +422,13 @@
       "description": "Returns 409 when shell_stocks_info rows reference this stock type.",
       "method": "DELETE",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_11"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -390,7 +454,13 @@
       "description": "Supports shell_id and shell_stock_id filters.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_12"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -416,7 +486,13 @@
       "description": "shell_stocks_info uses stock_info_id, a bigint identity.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_13"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -446,6 +522,11 @@
         "mimeType": "application/json"
       },
       "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_14"
+        },
         {
           "name": "Content-Type",
           "value": "application/json"
@@ -481,6 +562,11 @@
       },
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_15"
+        },
+        {
           "name": "Content-Type",
           "value": "application/json"
         }
@@ -510,7 +596,13 @@
       "description": "Physically deletes this shell_stocks_info record.",
       "method": "DELETE",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_16"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -536,7 +628,13 @@
       "description": "Supports shell_id and file_name filters; records with stored files include image_url and image_url_expires_at.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_17"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -562,7 +660,13 @@
       "description": "Replace image_id with a returned image id.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_18"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -610,7 +714,13 @@
           }
         ]
       },
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_19"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -636,7 +746,13 @@
       "description": "Returns shell images flagged as the main image.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_20"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -667,6 +783,11 @@
       },
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_21"
+        },
+        {
           "name": "Content-Type",
           "value": "application/json"
         }
@@ -696,7 +817,13 @@
       "description": "Physically deletes this shell_images metadata record.",
       "method": "DELETE",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_22"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -722,7 +849,13 @@
       "description": "Paginated shell type collection.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_23"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -748,7 +881,13 @@
       "description": "Replace shell_type_id with a returned type_id.",
       "method": "GET",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_24"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -778,6 +917,11 @@
         "mimeType": "application/json"
       },
       "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_25"
+        },
         {
           "name": "Content-Type",
           "value": "application/json"
@@ -813,6 +957,11 @@
       },
       "headers": [
         {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_26"
+        },
+        {
           "name": "Content-Type",
           "value": "application/json"
         }
@@ -842,7 +991,13 @@
       "description": "Returns 409 if a shell_description row references this shell type.",
       "method": "DELETE",
       "body": {},
-      "headers": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_27"
+        }
+      ],
       "authentication": {},
       "_type": "request",
       "parameters": [],
@@ -850,6 +1005,105 @@
       "preRequestScript": null,
       "afterResponseScript": null,
       "metaSortKey": -114,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_auth_me",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1792102717721,
+      "created": 1792102717721,
+      "url": "{{ _.base_url }}/api/auth/me",
+      "name": "Get current account",
+      "description": "Returns the signed-in account and its database-backed role.",
+      "method": "GET",
+      "body": {},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_new_req_auth_me"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -1028,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_auth_users",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1792102717721,
+      "created": 1792102717721,
+      "url": "{{ _.base_url }}/api/auth/users",
+      "name": "List accounts and roles",
+      "description": "Superadmin only. Lists all registered accounts and their current roles.",
+      "method": "GET",
+      "body": {},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_new_req_auth_users"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -1029,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_auth_assign_role",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1792102717721,
+      "created": 1792102717721,
+      "url": "{{ _.base_url }}/api/auth/users/{{ _.role_target_user_id }}/role",
+      "name": "Assign account role",
+      "description": "Superadmin only. Assigns a role to another account; the current account cannot change its own role.",
+      "method": "PATCH",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"role\": \"admin\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_new_req_auth_assign_role"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -1030,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,

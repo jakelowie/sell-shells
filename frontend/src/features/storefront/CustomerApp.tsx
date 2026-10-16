@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, CircleAlert, Image as ImageIcon, LoaderCircle, MapPin, Shell, Sparkles } from 'lucide-react';
 import { getAllImagesForShell, getShellById, getShellsForType, getShellTypes, type Shell as ShellRecord, type ShellImage, type ShellType } from '../../shared/api';
+import { useAuth } from '../auth/AuthProvider';
 
 const PAGE_SIZE = 12;
 const title = (shell: ShellRecord) => shell.shell_name || 'Untitled shell';
@@ -170,7 +171,9 @@ function ShellDetails({ shellId, onNavigate }: { shellId: string; onNavigate: (p
 }
 
 function StoreHeader({ onNavigate }: { onNavigate: (path: string) => void }) {
-  return <header className="store-header"><a href="/customers" className="store-brand" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}><span className="store-brand-mark"><Shell size={21} /></span><span>shellhouse<small>THE SHELL COLLECTION</small></span></a><nav className="store-header-nav"><a href="/customers#collection" onClick={event => { if (window.location.pathname !== '/customers') { event.preventDefault(); onNavigate('/customers'); } }}>The collection</a><a href="/customers#about">Our approach</a></nav><a className="header-collection-link" href="/customers#collection" onClick={event => { if (window.location.pathname !== '/customers') { event.preventDefault(); onNavigate('/customers'); } }}>Explore <ArrowRight size={14} /></a></header>;
+  const { user, role, signOut } = useAuth();
+  const isStaff = role === 'admin' || role === 'superadmin';
+  return <header className="store-header"><a href="/customers" className="store-brand" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}><span className="store-brand-mark"><Shell size={21} /></span><span>shellhouse<small>THE SHELL COLLECTION</small></span></a><nav className="store-header-nav"><a href="/customers#collection" onClick={event => { if (window.location.pathname !== '/customers') { event.preventDefault(); onNavigate('/customers'); } }}>The collection</a><a href="/customers#about">Our approach</a></nav><div className="store-header-actions"><a className="header-collection-link" href="/customers#collection" onClick={event => { if (window.location.pathname !== '/customers') { event.preventDefault(); onNavigate('/customers'); } }}>Explore <ArrowRight size={14} /></a>{isStaff ? <><a className="store-signout" href="/admin" onClick={event => { event.preventDefault(); onNavigate('/admin'); }}>Admin</a><button className="store-signout" title={user?.email || 'Sign out'} onClick={() => void signOut().catch(signOutError => window.alert((signOutError as Error).message))}>Sign out</button></> : <a className="store-signout" href="/sign-in" onClick={event => { event.preventDefault(); onNavigate('/sign-in'); }}>Staff sign in</a>}</div></header>;
 }
 
 function StoreFooter({ onNavigate }: { onNavigate: (path: string) => void }) {

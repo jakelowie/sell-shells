@@ -12,6 +12,15 @@ import type { StockInfo, StockInfoInsert, StockInfoUpdate } from "../validation/
 import type { ShellImage, ShellImageInsert, ShellImageUpdate } from "../validation/shell-image";
 import type { ShellType, ShellTypeInsert, ShellTypeUpdate } from "../validation/shell-type";
 
+export type AppRole = "user" | "admin" | "superadmin";
+export type UserRole = {
+  user_id: string;
+  email: string | null;
+  role: AppRole;
+  created_at: string;
+  updated_at: string;
+};
+
 type ShellDescriptionStockTypeRelationship = {
   foreignKeyName: "shell_description_shell_stock_type_id_fkey";
   columns: ["shell_stock_type_id"];
@@ -81,10 +90,21 @@ export type Database = {
         Update: ShellTypeUpdate;
         Relationships: [];
       };
+      user_roles: {
+        Row: UserRole;
+        Insert: Pick<UserRole, "user_id" | "email" | "role">;
+        Update: Partial<Pick<UserRole, "email" | "role">>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Functions: {
+      assign_user_role: {
+        Args: { target_user_id: string; new_role: AppRole };
+        Returns: UserRole;
+      };
+    };
+    Enums: { app_role: AppRole };
     CompositeTypes: Record<string, never>;
   };
 };

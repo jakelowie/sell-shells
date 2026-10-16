@@ -1,11 +1,15 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { Database } from "../models/database";
 
 let client: SupabaseClient<Database> | undefined;
 let storageClient: SupabaseClient<Database> | undefined;
+const requestClient = new AsyncLocalStorage<SupabaseClient<Database>>();
 
 /** Returns the server-side Supabase client using the project's publishable key. */
 export function getSupabaseClient(): SupabaseClient<Database> {
+  const scopedClient = requestClient.getStore();
+  if (scopedClient) return scopedClient;
   if (client) return client;
 
   const url = process.env.SUPABASE_URL;
@@ -25,6 +29,24 @@ export function getSupabaseClient(): SupabaseClient<Database> {
   });
 
   return client;
+}
+
+/** Creates a request-scoped client so Supabase RLS sees the caller's access token. */
+export function createUserSupabaseClient(accessToken: string): SupabaseClient<Database> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your .env file.");
+  }
+  return createClient<Database>(url, key, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
+
+/** Keeps concurrent Express requests isolated while existing services use the shared accessor. */
+export function runWithUserSupabaseClient(client: SupabaseClient<Database>, callback: () => void): void {
+  requestClient.run(client, callback);
 }
 
 /** Uses the server-only secret key for private Storage operations. */

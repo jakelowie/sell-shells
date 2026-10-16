@@ -24,7 +24,10 @@ export function sendError(response: Response, error: unknown): void {
   if (error instanceof DatabaseOperationError) {
     let status = 500;
     let message = "The database could not complete the request.";
-    if (error.code === "23505") {
+    if (error.code === "P0002") {
+      status = 404;
+      message = "The requested account role was not found.";
+    } else if (error.code === "23505") {
       status = 409;
       message = "A record with a conflicting unique value already exists.";
     } else if (error.code === "23503") {

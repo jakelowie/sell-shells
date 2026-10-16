@@ -13,6 +13,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { corsMiddleware } from "./middleware/cors";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
+import authRouter from "./routes/auth";
+import { authenticate, optionalAuthenticate, requireInventoryWriteRole, requireRole } from "./middleware/auth";
 
 const app = express();
 const openApiSpec = JSON.parse(readFileSync(path.resolve(__dirname, "../swagger.json"), "utf8"));
@@ -31,13 +33,14 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec, { swaggerOpti
 app.get("/health", (_request, response) => {
   response.json({ status: "ok" });
 });
-app.use("/api/shells", shellsRouter);
-app.use("/api/shell-stock-types", shellStockTypesRouter);
-app.use("/api/shell-types", shellTypesRouter);
-app.use("/api/stock-info", stockInfoRouter);
-app.use("/api/shell-stocks-info", stockInfoRouter);
-app.use("/api/shell-images", shellImagesRouter);
-app.use("/api/table", tableMetadataRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/shells", optionalAuthenticate, requireInventoryWriteRole, shellsRouter);
+app.use("/api/shell-stock-types", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, shellStockTypesRouter);
+app.use("/api/shell-types", optionalAuthenticate, requireInventoryWriteRole, shellTypesRouter);
+app.use("/api/stock-info", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, stockInfoRouter);
+app.use("/api/shell-stocks-info", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, stockInfoRouter);
+app.use("/api/shell-images", optionalAuthenticate, requireInventoryWriteRole, shellImagesRouter);
+app.use("/api/table", authenticate, requireRole("superadmin"), tableMetadataRouter);
 
 app.use((_request, response) => {
   response.status(404).json({ error: "Route not found." });
