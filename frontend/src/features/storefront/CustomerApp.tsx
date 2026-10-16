@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, CircleAlert, Image as ImageIcon, LoaderCircle, MapPin, Shell, Sparkles } from 'lucide-react';
-import { getAllImagesForShell, getShellById, getShellsForType, getShellTypes, type Shell as ShellRecord, type ShellImage, type ShellType } from '../../shared/api';
+import { getAllImagesForShell, getShellById, getShellLocalities, getShellsForType, getShellTypes, type Shell as ShellRecord, type ShellImage, type ShellLocality, type ShellType } from '../../shared/api';
 import { useAuth } from '../auth/AuthProvider';
 
 const PAGE_SIZE = 12;
@@ -16,6 +16,7 @@ export default function CustomerApp({ path, onNavigate }: { path: string; onNavi
 
 function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedTypeId: string; onSelectType: (id: string) => void; onNavigate: (path: string) => void }) {
   const [types, setTypes] = useState<ShellType[]>([]);
+  const [localities, setLocalities] = useState<ShellLocality[]>([]);
   const [typesLoading, setTypesLoading] = useState(true);
   const [typesError, setTypesError] = useState('');
   const [initialTypeId, setInitialTypeId] = useState('');
@@ -48,6 +49,12 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
   useEffect(() => loadTypes(), [loadTypes]);
 
   useEffect(() => {
+    let active = true;
+    getShellLocalities().then(result => { if (active) setLocalities(result.data); }).catch(() => { if (active) setLocalities([]); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     if (!activeTypeId || !selectedType) { setShells([]); setImages({}); setTotal(0); return; }
     let active = true;
     setLoading(true); setShellError(''); setFailed([]);
@@ -71,32 +78,299 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
 
   return <div className="storefront">
     <StoreHeader onNavigate={onNavigate} />
+
     <main>
-      <section className="store-hero"><div className="store-hero-copy"><span className="store-kicker"><Sparkles size={14} /> A SHELL COLLECTOR’S EDIT</span><h1>Find a little<br /><em>wonder.</em></h1><p>Explore a considered collection of natural shells, each with its own story and place of origin.</p><a className="hero-link" href="#collection">Explore the collection <ArrowDown size={15} /></a></div><div className="hero-art" aria-hidden="true"><div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" /><div className="hero-shell">{images[shells[0]?.shell_id]?.image_url ? <img className="hero-photo" src={images[shells[0].shell_id]?.image_url ?? undefined} alt="" /> : <Shell size={104} strokeWidth={0.8} />}</div><span className="hero-caption">THE QUIET BEAUTY OF THE SHORE</span><span className="hero-index">01 — 04</span></div><div className="hero-footnote"><span>Curated natural specimens</span><span>Collected with care&nbsp; · &nbsp;Shared with wonder</span></div></section>
-      <section id="collection" className="collection-section"><div className="collection-intro"><div><span className="store-kicker">THE COLLECTION</span><h2>Browse by shell type</h2><p>Choose a category to discover the shells within.</p></div><span className="collection-note">A living catalog of coastal forms</span></div>
-        {typesLoading ? <div className="store-state"><LoaderCircle className="spin" size={22} /> Loading shell types…</div> : typesError ? <div className="store-error"><CircleAlert size={17} /><span>{typesError}</span><button onClick={() => { void loadTypes(); }}>Try again</button></div> : types.length === 0 ? <div className="store-empty"><div className="store-empty-icon"><Shell size={22} /></div><h3>The collection is taking shape</h3><p>Shell categories will appear here as they are added.</p></div> : <>
-          <nav className="category-tabs" aria-label="Shell types">{types.map((type, index) => <button key={type.type_id} className={activeTypeId === type.type_id ? 'active' : ''} aria-pressed={activeTypeId === type.type_id} onClick={() => selectType(type.type_id)}><span className="category-number">{String(index + 1).padStart(2, '0')}</span>{type.shell_type_name || 'Unnamed type'}<span className="category-arrow"><ArrowRight size={14} /></span></button>)}</nav>
-          <div className="products-heading"><div><span className="store-kicker">{selectedType?.shell_type_name || 'SELECTED CATEGORY'}</span><h2>{selectedType?.shell_type_name || 'Shells'}</h2></div><span>{total} {total === 1 ? 'specimen' : 'specimens'}</span></div>
-          {shellError && <div className="store-error"><CircleAlert size={17} /><span>{shellError}</span><button onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
-          {loading ? <div className="store-state"><LoaderCircle className="spin" size={22} /> Gathering the collection…</div> : shellError ? null : shells.length === 0 ? <div className="store-empty"><div className="store-empty-icon"><Shell size={22} /></div><h3>No specimens in this category yet</h3><p>Check back as the collection grows.</p></div> : <div className="product-grid">{shells.map((shell, index) => {
-            const image = images[shell.shell_id]; const imageFailed = failed.includes(shell.shell_id);
-            return <a className="product-card" href={`/customers/shell/${encodeURIComponent(shell.shell_id)}`} target="_blank" rel="noopener noreferrer" key={shell.shell_id} aria-label={`View details for ${title(shell)}`} style={{ animationDelay: `${Math.min(index * 35, 210)}ms` }}>
-              <div className="product-image">{image?.image_url && !imageFailed ? <img src={image.image_url} alt={title(shell)} loading="lazy" onError={() => setFailed(current => current.includes(shell.shell_id) ? current : [...current, shell.shell_id])} /> : <div className="product-placeholder"><Shell size={34} strokeWidth={1} /><span>Image unavailable</span></div>}<span className="view-product">View specimen <ArrowRight size={14} /></span></div>
-              <div className="product-info"><div><h3>{title(shell)}</h3><p>{shell.author || 'Author not recorded'}</p></div><span className="product-number">{String(page * PAGE_SIZE + index + 1).padStart(2, '0')}</span></div>
-              {shell.locality && <div className="product-origin"><MapPin size={13} />{shell.locality}</div>}
-            </a>;
-          })}</div>}
-          {!loading && !shellError && total > PAGE_SIZE && <div className="store-pagination"><span>Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}</span><div><button aria-label="Previous page" disabled={page === 0} onClick={() => setPage(value => value - 1)}><ChevronLeft size={17} /></button><span>{page + 1} <i>/</i> {Math.ceil(total / PAGE_SIZE)}</span><button aria-label="Next page" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(value => value + 1)}><ChevronRight size={17} /></button></div></div>}
-        </>}
+      <section className="store-hero">
+        <div className="store-hero-copy">
+          <span className="store-kicker">
+            <Sparkles size={14} /> A SHELL COLLECTOR’S EDIT
+          </span>
+
+          <h1>
+            Find a little
+            <br />
+            <em>wonder.</em>
+          </h1>
+
+          <p>
+            Explore a considered collection of natural shells, each with
+            its own story and place of origin.
+          </p>
+
+          <a className="hero-link" href="#collection">
+            Explore the collection <ArrowDown size={15} />
+          </a>
+        </div>
+
+        <div className="hero-art" aria-hidden="true">
+          <div className="hero-orbit orbit-one" />
+          <div className="hero-orbit orbit-two" />
+
+          <div className="hero-shell">
+            {images[shells[0]?.shell_id]?.image_url ? (
+              <img
+                className="hero-photo"
+                src={images[shells[0].shell_id]?.image_url ?? undefined}
+                alt=""
+              />
+            ) : (
+              <Shell size={104} strokeWidth={0.8} />
+            )}
+          </div>
+
+          <span className="hero-caption">
+            THE QUIET BEAUTY OF THE SHORE
+          </span>
+
+          <span className="hero-index">01 — 04</span>
+        </div>
+
+        <div className="hero-footnote">
+          <span>Curated natural specimens</span>
+          <span>
+            Collected with care&nbsp; · &nbsp;Shared with wonder
+          </span>
+        </div>
+      </section>
+
+      <section id="collection" className="collection-section">
+        <div className="collection-intro">
+          <div>
+            <span className="store-kicker">THE COLLECTION</span>
+            <h2>Browse by shell type</h2>
+            <p>Choose a category to discover the shells within.</p>
+          </div>
+
+          <span className="collection-note">
+            A living catalog of coastal forms
+          </span>
+        </div>
+
+        {typesLoading ? (
+          <div className="store-state">
+            <LoaderCircle className="spin" size={22} />
+            Loading shell types…
+          </div>
+        ) : typesError ? (
+          <div className="store-error">
+            <CircleAlert size={17} />
+            <span>{typesError}</span>
+            <button onClick={() => { void loadTypes(); }}>
+              Try again
+            </button>
+          </div>
+        ) : types.length === 0 ? (
+          <div className="store-empty">
+            <div className="store-empty-icon">
+              <Shell size={22} />
+            </div>
+            <h3>The collection is taking shape</h3>
+            <p>Shell categories will appear here as they are added.</p>
+          </div>
+        ) : (
+          <>
+            <nav className="category-tabs" aria-label="Shell types">
+              {types.map((type, index) => (
+                <button
+                  key={type.type_id}
+                  className={
+                    activeTypeId === type.type_id ? 'active' : ''
+                  }
+                  aria-pressed={activeTypeId === type.type_id}
+                  onClick={() => selectType(type.type_id)}
+                >
+                  <span className="category-number">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+
+                  {type.shell_type_name || 'Unnamed type'}
+
+                  <span className="category-arrow">
+                    <ArrowRight size={14} />
+                  </span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="products-heading">
+              <div>
+                <span className="store-kicker">
+                  {selectedType?.shell_type_name || 'SELECTED CATEGORY'}
+                </span>
+                <h2>{selectedType?.shell_type_name || 'Shells'}</h2>
+              </div>
+
+              <span>
+                {total} {total === 1 ? 'specimen' : 'specimens'}
+              </span>
+            </div>
+
+            {shellError && (
+              <div className="store-error">
+                <CircleAlert size={17} />
+                <span>{shellError}</span>
+                <button onClick={() => setRetry(value => value + 1)}>
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="store-state">
+                <LoaderCircle className="spin" size={22} />
+                Gathering the collection…
+              </div>
+            ) : shellError ? null : shells.length === 0 ? (
+              <div className="store-empty">
+                <div className="store-empty-icon">
+                  <Shell size={22} />
+                </div>
+                <h3>No specimens in this category yet</h3>
+                <p>Check back as the collection grows.</p>
+              </div>
+            ) : (
+              <div className="product-grid">
+                {shells.map((shell, index) => {
+                  const image = images[shell.shell_id];
+                  const imageFailed = failed.includes(shell.shell_id);
+
+                  return (
+                    <a
+                      className="product-card"
+                      href={`/customers/shell/${encodeURIComponent(
+                        shell.shell_id
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      key={shell.shell_id}
+                      aria-label={`View details for ${title(shell)}`}
+                      style={{
+                        animationDelay: `${Math.min(index * 35, 210)}ms`,
+                      }}
+                    >
+                      <div className="product-image">
+                        {image?.image_url && !imageFailed ? (
+                          <img
+                            src={image.image_url}
+                            alt={title(shell)}
+                            loading="lazy"
+                            onError={() =>
+                              setFailed(current =>
+                                current.includes(shell.shell_id)
+                                  ? current
+                                  : [...current, shell.shell_id]
+                              )
+                            }
+                          />
+                        ) : (
+                          <div className="product-placeholder">
+                            <Shell size={34} strokeWidth={1} />
+                            <span>Image unavailable</span>
+                          </div>
+                        )}
+
+                        <span className="view-product">
+                          View specimen <ArrowRight size={14} />
+                        </span>
+                      </div>
+
+                      <div className="product-info">
+                        <div>
+                          <h3>{title(shell)}</h3>
+                          <p>{shell.author || 'Author not recorded'}</p>
+                        </div>
+
+                        <span className="product-number">
+                          {String(page * PAGE_SIZE + index + 1).padStart(
+                            2,
+                            '0'
+                          )}
+                        </span>
+                      </div>
+
+                      {shell.locality_id &&
+                        localities.find(
+                          locality =>
+                            locality.locality_id === shell.locality_id
+                        )?.locality && (
+                          <div className="product-origin">
+                            <MapPin size={13} />
+                            {
+                              localities.find(
+                                locality =>
+                                  locality.locality_id === shell.locality_id
+                              )?.locality
+                            }
+                          </div>
+                        )}
+
+                      {shell.price != null && (
+                        <div className="product-price">
+                          <span>Price</span>
+                          <strong>{shell.price} $</strong>
+                        </div>
+                      )}
+                      {shell.shell_weight != null && (
+                        <div className="product-weight">
+                          <span>Weight</span>
+                          <strong>{shell.shell_weight} kg</strong>
+                        </div>
+                      )}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+
+            {!loading && !shellError && total > PAGE_SIZE && (
+              <div className="store-pagination">
+                <span>
+                  Showing {page * PAGE_SIZE + 1}–
+                  {Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+                </span>
+
+                <div>
+                  <button
+                    aria-label="Previous page"
+                    disabled={page === 0}
+                    onClick={() => setPage(value => value - 1)}
+                  >
+                    <ChevronLeft size={17} />
+                  </button>
+
+                  <span>
+                    {page + 1} <i>/</i> {Math.ceil(total / PAGE_SIZE)}
+                  </span>
+
+                  <button
+                    aria-label="Next page"
+                    disabled={(page + 1) * PAGE_SIZE >= total}
+                    onClick={() => setPage(value => value + 1)}
+                  >
+                    <ChevronRight size={17} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </section>
     </main>
+
     <StoreFooter onNavigate={onNavigate} />
   </div>;
 }
 
-function ShellDetails({ shellId, onNavigate }: { shellId: string; onNavigate: (path: string) => void }) {
+function ShellDetails({
+  shellId,
+  onNavigate,
+}: {
+  shellId: string;
+  onNavigate: (path: string) => void;
+}) {
   const [shell, setShell] = useState<ShellRecord | null>(null);
   const [types, setTypes] = useState<ShellType[]>([]);
+  const [localities, setLocalities] = useState<ShellLocality[]>([]);
   const [images, setImages] = useState<ShellImage[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -111,63 +385,398 @@ function ShellDetails({ shellId, onNavigate }: { shellId: string; onNavigate: (p
 
   useEffect(() => {
     let active = true;
-    setLoading(true); setError(''); setImageError(''); setNotFound(false); setImages([]); setShell(null); setSelectedImage(0); setBroken([]); setUrlRetries([]);
-    Promise.all([getShellById(shellId), getShellTypes().catch(() => ({ data: [] as ShellType[] }))]).then(async ([shellResult, typeResult]) => {
-      if (!active) return;
-      if (shellResult.data.shell_id !== shellId) { setNotFound(true); return; }
-      setShell(shellResult.data); setTypes(typeResult.data);
-      try { const imageRecords = await getAllImagesForShell(shellId); if (active) setImages(imageRecords.filter(image => image.shell_id === shellId)); }
-      catch (imageLoadError) { if (active) setImageError((imageLoadError as Error).message); }
-    }).catch(error => {
-      if (!active) return;
-      const message = (error as Error).message;
-      if (message.includes('(404)') || message.toLowerCase().includes('not found')) setNotFound(true);
-      else setError(message);
-    }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+
+    setLoading(true);
+    setError('');
+    setImageError('');
+    setNotFound(false);
+    setImages([]);
+    setShell(null);
+    setSelectedImage(0);
+    setBroken([]);
+    setUrlRetries([]);
+
+    Promise.all([
+      getShellById(shellId),
+      getShellTypes().catch(() => ({
+        data: [] as ShellType[],
+      })),
+      getShellLocalities().catch(() => ({
+        data: [] as ShellLocality[],
+      })),
+    ])
+      .then(
+        async ([shellResult, typeResult, localityResult]) => {
+          if (!active) return;
+
+          if (shellResult.data.shell_id !== shellId) {
+            setNotFound(true);
+            return;
+          }
+
+          setShell(shellResult.data);
+          setTypes(typeResult.data);
+          setLocalities(localityResult.data);
+
+          try {
+            const imageRecords = await getAllImagesForShell(shellId);
+
+            if (active) {
+              setImages(
+                imageRecords.filter(
+                  (image) => image.shell_id === shellId,
+                ),
+              );
+            }
+          } catch (imageLoadError) {
+            if (active) {
+              setImageError((imageLoadError as Error).message);
+            }
+          }
+        },
+      )
+      .catch((error) => {
+        if (!active) return;
+
+        const message = (error as Error).message;
+
+        if (
+          message.includes('(404)') ||
+          message.toLowerCase().includes('not found')
+        ) {
+          setNotFound(true);
+        } else {
+          setError(message);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, [retry, shellId]);
 
-  useEffect(() => { if (!lightbox) return; const keydown = (event: KeyboardEvent) => { if (event.key === 'Escape') setLightbox(false); }; window.addEventListener('keydown', keydown); return () => window.removeEventListener('keydown', keydown); }, [lightbox]);
+  useEffect(() => {
+    if (!lightbox) return;
+
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setLightbox(false);
+      }
+    };
+
+    window.addEventListener('keydown', keydown);
+
+    return () => {
+      window.removeEventListener('keydown', keydown);
+    };
+  }, [lightbox]);
 
   const refreshImages = async () => {
     setFreshening(true);
     setImageError('');
-    try { const records = await getAllImagesForShell(shellId); setImages(records.filter(image => image.shell_id === shellId)); setSelectedImage(0); setBroken([]); }
-    catch (error) { setImageError((error as Error).message); }
-    finally { setFreshening(false); }
+
+    try {
+      const records = await getAllImagesForShell(shellId);
+
+      setImages(
+        records.filter((image) => image.shell_id === shellId),
+      );
+      setSelectedImage(0);
+      setBroken([]);
+    } catch (error) {
+      setImageError((error as Error).message);
+    } finally {
+      setFreshening(false);
+    }
   };
 
   const currentImage = images[selectedImage];
-  const currentImageFailed = currentImage ? broken.includes(currentImage.image_id) : false;
+
+  const currentImageFailed = currentImage
+    ? broken.includes(currentImage.image_id)
+    : false;
+
   const handleImageFailure = (image: ShellImage) => {
-    setBroken(current => current.includes(image.image_id) ? current : [...current, image.image_id]);
+    setBroken((current) =>
+      current.includes(image.image_id)
+        ? current
+        : [...current, image.image_id],
+    );
+
     if (!urlRetries.includes(image.image_id)) {
-      setUrlRetries(current => [...current, image.image_id]);
+      setUrlRetries((current) => [...current, image.image_id]);
       void refreshImages();
     }
   };
-  const shellTypeName = types.find(type => type.type_id === shell?.shell_type_id)?.shell_type_name;
-  useEffect(() => { document.title = shell ? `${title(shell)} — Shellhouse` : 'Shell details — Shellhouse'; }, [shell]);
-  const infoRows = shell ? [
-    ['Scientific author', shell.author], ['Locality', shell.locality], ['Depth', shell.deepness], ['Source', shell.from]
-  ].filter((row): row is [string, string] => Boolean(row[1])) : [];
 
-  return <div className="storefront details-storefront">
-    <StoreHeader onNavigate={onNavigate} />
-    <main className="detail-main"><a className="back-to-store" href="/customers" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}><ArrowLeft size={15} /> Back to collection</a>
-      {loading ? <div className="detail-state"><LoaderCircle className="spin" size={24} /> Opening specimen…</div> : notFound ? <div className="detail-state detail-empty"><div className="store-empty-icon"><Shell size={24} /></div><h1>Specimen not found</h1><p>This shell may have been removed or is no longer available.</p><a className="detail-back-button" href="/customers" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}>Browse the collection</a></div> : error && !shell ? <div className="store-error"><CircleAlert size={18} /><span>{error}</span><button onClick={() => setRetry(value => value + 1)}>Try again</button></div> : shell && <div className="detail-layout">
-        <section className="detail-gallery"><div className="detail-main-image" onClick={() => currentImage?.image_url && !currentImageFailed && setLightbox(true)}>{currentImage?.image_url && !currentImageFailed ? <img src={currentImage.image_url} alt={title(shell)} onError={() => handleImageFailure(currentImage)} /> : <div className="detail-placeholder"><Shell size={56} strokeWidth={.8} /><span>{images.length ? 'This image could not be loaded' : 'No images for this specimen yet'}</span></div>}{currentImage?.image_url && !currentImageFailed && <span className="enlarge-image">Click to enlarge</span>}</div>
-          {images.length > 0 && <div className="thumbnail-row" aria-label="Shell images">{images.map((image, index) => <button key={image.image_id} className={`image-thumbnail ${selectedImage === index ? 'active' : ''}`} aria-label={`Show image ${index + 1}`} aria-pressed={selectedImage === index} onClick={() => setSelectedImage(index)}>{image.image_url && !broken.includes(image.image_id) ? <img src={image.image_url} alt={`${title(shell)} view ${index + 1}`} onError={() => handleImageFailure(image)} /> : <span><ImageIcon size={17} /></span>}</button>)}</div>}
-          {imageError && <div className="image-load-error"><span>Images couldn’t be loaded.</span><button onClick={() => void refreshImages()} disabled={freshening}>{freshening && <LoaderCircle className="spin" size={13} />} Try again</button></div>}{currentImageFailed && !imageError && <button className="refresh-images" onClick={() => void refreshImages()} disabled={freshening}>{freshening && <LoaderCircle className="spin" size={14} />} Refresh image links</button>}</section>
-        <section className="detail-copy"><div className="store-kicker">{shellTypeName || 'SHELL SPECIMEN'}</div><h1>{title(shell)}</h1><p className="detail-author">{shell.author || 'Author not recorded'}</p><div className="detail-rule" /><div className="detail-description">{shell.note ? <p>{shell.note}</p> : <p>No additional description is available.</p>}</div>
-          {infoRows.length > 0 && <dl className="detail-facts">{infoRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
-          {shell.is_deleted && <div className="unavailable-note">This specimen is currently unavailable.</div>}
-          <a className="detail-collection-link" href="/customers" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}>Discover more shells <ArrowRight size={15} /></a>
-        </section>
-      </div>}
-    </main><StoreFooter onNavigate={onNavigate} />
-    {lightbox && currentImage?.image_url && <div className="image-lightbox" role="dialog" aria-modal="true" aria-label="Expanded shell photograph" onClick={() => setLightbox(false)}><button aria-label="Close image" onClick={() => setLightbox(false)}>×</button><img src={currentImage.image_url} alt={title(shell!)} /></div>}
-  </div>;
+  const shellTypeName = types.find(
+    (type) => type.type_id === shell?.shell_type_id,
+  )?.shell_type_name;
+
+  useEffect(() => {
+    document.title = shell
+      ? `${title(shell)} — Shellhouse`
+      : 'Shell details — Shellhouse';
+  }, [shell]);
+
+  const infoRows = shell
+    ? [
+        ['Scientific author', shell.author],
+        [
+          'Locality',
+          localities.find(
+            (locality) => locality.locality_id === shell.locality_id,
+          )?.locality ?? null,
+        ],
+        ['Depth', shell.deepness],
+        ['Source', shell.from],
+        [
+          'Price',
+          shell.price == null ? null : String(shell.price) + ' $',
+        ],
+        ['Weight', shell.shell_weight == null ? null : String(shell.shell_weight) + ' kg'],
+      ].filter((row): row is [string, string] => Boolean(row[1]))
+    : [];
+
+  return (
+    <div className="storefront details-storefront">
+      <StoreHeader onNavigate={onNavigate} />
+
+      <main className="detail-main">
+        <a
+          className="back-to-store"
+          href="/customers"
+          onClick={(event) => {
+            event.preventDefault();
+            onNavigate('/customers');
+          }}
+        >
+          <ArrowLeft size={15} />
+          Back to collection
+        </a>
+
+        {loading ? (
+          <div className="detail-state">
+            <LoaderCircle className="spin" size={24} />
+            Opening specimen…
+          </div>
+        ) : notFound ? (
+          <div className="detail-state detail-empty">
+            <div className="store-empty-icon">
+              <Shell size={24} />
+            </div>
+
+            <h1>Specimen not found</h1>
+
+            <p>
+              This shell may have been removed or is no longer available.
+            </p>
+
+            <a
+              className="detail-back-button"
+              href="/customers"
+              onClick={(event) => {
+                event.preventDefault();
+                onNavigate('/customers');
+              }}
+            >
+              Browse the collection
+            </a>
+          </div>
+        ) : error && !shell ? (
+          <div className="store-error">
+            <CircleAlert size={18} />
+            <span>{error}</span>
+            <button onClick={() => setRetry((value) => value + 1)}>
+              Try again
+            </button>
+          </div>
+        ) : (
+          shell && (
+            <div className="detail-layout">
+              <section className="detail-gallery">
+                <div
+                  className="detail-main-image"
+                  onClick={() => {
+                    if (
+                      currentImage?.image_url &&
+                      !currentImageFailed
+                    ) {
+                      setLightbox(true);
+                    }
+                  }}
+                >
+                  {currentImage?.image_url && !currentImageFailed ? (
+                    <img
+                      src={currentImage.image_url}
+                      alt={title(shell)}
+                      onError={() => handleImageFailure(currentImage)}
+                    />
+                  ) : (
+                    <div className="detail-placeholder">
+                      <Shell size={56} strokeWidth={0.8} />
+                      <span>
+                        {images.length
+                          ? 'This image could not be loaded'
+                          : 'No images for this specimen yet'}
+                      </span>
+                    </div>
+                  )}
+
+                  {currentImage?.image_url && !currentImageFailed && (
+                    <span className="enlarge-image">
+                      Click to enlarge
+                    </span>
+                  )}
+                </div>
+
+                {images.length > 0 && (
+                  <div
+                    className="thumbnail-row"
+                    aria-label="Shell images"
+                  >
+                    {images.map((image, index) => (
+                      <button
+                        key={image.image_id}
+                        className={`image-thumbnail ${
+                          selectedImage === index ? 'active' : ''
+                        }`}
+                        aria-label={`Show image ${index + 1}`}
+                        aria-pressed={selectedImage === index}
+                        onClick={() => setSelectedImage(index)}
+                      >
+                        {image.image_url &&
+                        !broken.includes(image.image_id) ? (
+                          <img
+                            src={image.image_url}
+                            alt={`${title(shell)} view ${index + 1}`}
+                            onError={() => handleImageFailure(image)}
+                          />
+                        ) : (
+                          <span>
+                            <ImageIcon size={17} />
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {imageError && (
+                  <div className="image-load-error">
+                    <span>Images couldn’t be loaded.</span>
+
+                    <button
+                      onClick={() => void refreshImages()}
+                      disabled={freshening}
+                    >
+                      {freshening && (
+                        <LoaderCircle className="spin" size={13} />
+                      )}
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {currentImageFailed && !imageError && (
+                  <button
+                    className="refresh-images"
+                    onClick={() => void refreshImages()}
+                    disabled={freshening}
+                  >
+                    {freshening && (
+                      <LoaderCircle className="spin" size={14} />
+                    )}
+                    Refresh image links
+                  </button>
+                )}
+              </section>
+
+              <section className="detail-copy">
+                <div className="store-kicker">
+                  {shellTypeName || 'SHELL SPECIMEN'}
+                </div>
+
+                <h1>{title(shell)}</h1>
+
+                <p className="detail-author">
+                  {shell.author || 'Author not recorded'}
+                </p>
+
+                <div className="detail-rule" />
+
+                <div className="detail-description">
+                  {shell.note ? (
+                    <p>{shell.note}</p>
+                  ) : (
+                    <p>No additional description is available.</p>
+                  )}
+                </div>
+
+                {infoRows.length > 0 && (
+                  <dl className="detail-facts">
+                    {infoRows.map(([label, value]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+
+                {shell.is_deleted && (
+                  <div className="unavailable-note">
+                    This specimen is currently unavailable.
+                  </div>
+                )}
+
+                <a
+                  className="detail-collection-link"
+                  href="/customers"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onNavigate('/customers');
+                  }}
+                >
+                  Discover more shells
+                  <ArrowRight size={15} />
+                </a>
+              </section>
+            </div>
+          )
+        )}
+      </main>
+
+      <StoreFooter onNavigate={onNavigate} />
+
+      {lightbox && currentImage?.image_url && (
+        <div
+          className="image-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Expanded shell photograph"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            aria-label="Close image"
+            onClick={() => setLightbox(false)}
+          >
+            ×
+          </button>
+
+          <img
+            src={currentImage.image_url}
+            alt={title(shell!)}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function StoreHeader({ onNavigate }: { onNavigate: (path: string) => void }) {

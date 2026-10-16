@@ -7,7 +7,8 @@ export async function listShellDescriptions(query: ShellDescriptionListQuery): P
   if (!query.include_deleted) request = request.or("is_deleted.is.null,is_deleted.eq.false");
   if (query.shell_name !== undefined) request = request.eq("shell_name", query.shell_name);
   if (query.author !== undefined) request = request.eq("author", query.author);
-  if (query.locality !== undefined) request = request.eq("locality", query.locality);
+  if (query.locality_id !== undefined) request = request.eq("locality_id", query.locality_id);
+  if (query.price !== undefined) request = request.eq("price", query.price);
   if (query.shell_stock_type_id !== undefined) request = request.eq("shell_stock_type_id", query.shell_stock_type_id);
   if (query.shell_type_id !== undefined) request = request.eq("shell_type_id", query.shell_type_id);
   const { data, count, error } = await request

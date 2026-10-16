@@ -1,5 +1,5 @@
 import { list, record } from './client';
-import type { Shell, ShellImage, ShellType } from './types';
+import type { Shell, ShellImage, ShellLocality, ShellType } from './types';
 
 const PAGE_SIZE = 100;
 
@@ -11,6 +11,19 @@ export async function getShellTypes() {
   const remainingPages = await Promise.all(
     Array.from({ length: pageCount }, (_, index) => list<ShellType>('/api/shell-types', {
       limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'shell_type_name', sort_order: 'asc',
+    })),
+  );
+  return { ...firstPage, data: [...firstPage.data, ...remainingPages.flatMap(page => page.data)] };
+}
+
+export async function getShellLocalities() {
+  const firstPage = await list<ShellLocality>('/api/shell-localities', {
+    limit: PAGE_SIZE, offset: 0, sort_by: 'locality', sort_order: 'asc',
+  });
+  const pageCount = Math.ceil(Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE);
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) => list<ShellLocality>('/api/shell-localities', {
+      limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'locality', sort_order: 'asc',
     })),
   );
   return { ...firstPage, data: [...firstPage.data, ...remainingPages.flatMap(page => page.data)] };

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { API_BASE_URL } from '../../shared/api/client';
 import { getAuthClient } from './supabase';
@@ -23,13 +23,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roleError, setRoleError] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
+  const resolvedUserId = useRef<string | null>(null);
 
-  const resolveRole = useCallback(async (session: Session | null, requestGeneration: number) => {
+  const resolveRole = useCallback(async (session: Session | null, requestGeneration: number, blocking = true) => {
     if (!session) {
+      resolvedUserId.current = null;
       setUser(null); setRole(null); setRoleError(null); setLoading(false);
       return;
     }
-    setUser(session.user); setRole(null); setRoleError(null); setLoading(true);
+    setUser(session.user);
+    if (blocking) { setRole(null); setRoleError(null); setLoading(true); }
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -41,14 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Your account role is missing or invalid. Contact a superadmin.');
       }
       if (requestGeneration === generationRef.current) {
+        resolvedUserId.current = session.user.id;
         setRole(nextRole ?? null); setRoleError(null);
       }
     } catch (error) {
-      if (requestGeneration === generationRef.current) {
+      if (blocking && requestGeneration === generationRef.current) {
+        resolvedUserId.current = null;
         setRole(null); setRoleError((error as Error).message);
       }
     } finally {
-      if (requestGeneration === generationRef.current) setLoading(false);
+      if (blocking && requestGeneration === generationRef.current) setLoading(false);
     }
   }, []);
 
@@ -60,17 +65,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let sequence = 0;
     try {
       const client = getAuthClient();
-      const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+      const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
         if (!active) return;
         const current = ++sequence;
         setGeneration(current);
         if (!session) {
+          resolvedUserId.current = null;
           setUser(null); setRole(null); setRoleError(null); setLoading(false);
           return;
         }
-        setUser(session.user); setRole(null); setLoading(true);
+        const blocking = event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || resolvedUserId.current !== session.user.id;
+        if (blocking) { setUser(session.user); setRole(null); setRoleError(null); setLoading(true); }
         // Keep the SDK auth callback synchronous; role lookup runs after its lock is released.
-        window.setTimeout(() => { void resolveRole(session, current); }, 0);
+        window.setTimeout(() => { void resolveRole(session, current, blocking); }, 0);
       });
       const recheckRole = () => {
         if (document.visibilityState !== 'visible') return;
@@ -79,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const current = ++sequence;
           generationRef.current = current;
           setGeneration(current);
-          void resolveRole(data.session, current);
+          void resolveRole(data.session, current, resolvedUserId.current !== data.session.user.id);
         });
       };
       window.addEventListener('focus', recheckRole);

@@ -1,6 +1,6 @@
 # sell-shells
 
-Express and TypeScript APIs for the five inventory tables, backed by Supabase. Authentication adds a protected `public.user_roles` table linked to Supabase Auth users. The API is organized into routes, controllers, services, Zod validators, and typed database models.
+Express and TypeScript APIs for the Supabase shell inventory, including shell localities. Authentication adds a protected `public.user_roles` table linked to Supabase Auth users. The API is organized into routes, controllers, services, Zod validators, and typed database models.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step Vercel setup for the API and frontend.
 
@@ -15,7 +15,7 @@ Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and the server-only `SUPABASE_SE
 
 For staff sign-in, copy `frontend/.env.example` to `frontend/.env` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to the same project URL and publishable key. These browser settings are public by design; never set `SUPABASE_SECRET_KEY` in the frontend. Public shell browsing does not require these frontend Auth settings.
 
-Before using image uploads, run the SQL migrations in `supabase/migrations` in the Supabase SQL editor. They add the `storage_path` and `is_main_image` columns and configure the private `shell_images` bucket with a 5 MB limit and supported image MIME types. Database RLS must allow the API's publishable-key role to select and insert `shell_images` rows (and update/delete if those endpoints are used). Signed URL lifetime defaults to one hour and can be set with `SUPABASE_SIGNED_URL_TTL_SECONDS` from 60 to 604800 seconds.
+Run the SQL migrations in `supabase/migrations` in the Supabase SQL editor. The `20261016020000_shell_localities_and_price.sql` migration adds the `shell_locality` table, `shell_description.price`, and the `locality_id` foreign key; when upgrading from the previous schema it migrates existing locality text values into the lookup table. The `20261016030000_shell_weight.sql` migration adds nullable numeric `shell_description.shell_weight`. Apply these after the authentication/RLS setup. Image migrations configure the private `shell_images` bucket and its columns. Database RLS must allow the API's publishable-key role to select and insert `shell_images` rows (and update/delete if those endpoints are used). Signed URL lifetime defaults to one hour and can be set with `SUPABASE_SIGNED_URL_TTL_SECONDS` from 60 to 604800 seconds.
 
 ```sh
 npm run dev
@@ -39,7 +39,7 @@ Customer browsing is public and does not create a customer login. The shell desc
 
 The frontend hides routes and actions users cannot access, but the API and RLS enforce the same permissions independently. New Supabase Auth users receive `user` from a database trigger. The migration also backfills existing accounts as `user` without changing any existing role row. The `user_roles` table cannot be changed directly by clients; the role assignment RPC permits only a superadmin, blocks self-changes, and prevents removing the last superadmin.
 
-Apply `supabase/migrations/20261016000000_auth_roles_and_rls.sql` after the existing schema migrations, then apply `supabase/migrations/20261016010000_public_catalog_reads.sql` if the role migration was already applied. Anonymous reads are limited to `shell_description`, `shell_type`, and `shell_images`; stock-type and stock-quantity data stay staff-only. The migrations create the `app_role` enum and `user_roles` table, enable RLS on inventory tables, and restrict writes by role. Provision staff accounts through Supabase Auth (for example, invite them from the Dashboard). For the initial superadmin, replace the placeholder email in `supabase/bootstrap/first_superadmin.sql` and run that one-time script in the trusted SQL Editor after the staff account has been created. Afterward, superadmins can assign `user`, `admin`, or `superadmin` to other accounts at `/admin/users`. Role changes cannot target the currently signed-in account.
+The role/RLS migration creates the `app_role` enum and `user_roles` table, enables RLS on inventory tables, and restricts writes by role. If it is already applied, do not rerun it; apply the newer schema migrations as needed, including `20261016030000_shell_weight.sql`. Anonymous catalog reads include `shell_description`, `shell_type`, `shell_images`, and `shell_locality`; stock-type and stock-quantity data stay staff-only. Provision staff accounts through Supabase Auth (for example, invite them from the Dashboard). For the initial superadmin, replace the placeholder email in `supabase/bootstrap/first_superadmin.sql` and run that one-time script in the trusted SQL Editor after the staff account has been created. Afterward, superadmins can assign `user`, `admin`, or `superadmin` to other accounts at `/admin/users`. Role changes cannot target the currently signed-in account.
 
 The public storefront is available at `/` and `/customers` without an account. `/sign-in` is for staff; `/admin` requires the `admin` or `superadmin` role. A signed-in `user` can still browse, but receives an access-denied state in the admin area. Staff sign-in and role verification show loading states while the session is restored.
 
@@ -48,16 +48,17 @@ The public storefront is available at `/` and `/customers` without an account. `
 Every resource supports `GET /`, `GET /:id`, `POST /`, `PATCH /:id`, and `DELETE /:id` under its base path:
 
 - `/api/shells` — `shell_description`; DELETE is a soft delete setting `is_deleted=true`, preserving child references. Reads hide records where `is_deleted=true` unless `include_deleted=true`.
+- `/api/shell-localities` — `shell_locality`; CRUD for locality lookup values keyed by `locality_id`. Reads are public; create, update, and delete require an admin or superadmin. A locality referenced by a shell cannot be deleted due to the foreign key.
 - `/api/shell-stock-types` — `shell_stock_type`; DELETE is physical and returns `409` if a `shell_stocks_info` row references it.
 - `/api/shell-types` — `shell_type`; CRUD for shell type names, keyed by `type_id`.
 - `/api/shell-stocks-info` — `shell_stocks_info`; supports the declared `shell_id` and `shell_stock_id` foreign keys. `shell_total_available` is computed as `shell_stock * shell_pcs_per_stock` on create and update (null when either input is null). Its `stock_info_id` is a bigint identity. `/api/stock-info` remains as a backward-compatible alias.
 - `/api/shell-images` — `shell_images`, keyed by `image_id`; POST accepts `multipart/form-data` with an `image` file plus optional `shell_id` and `is_main_image`. PATCH can change `is_main_image`. The boolean can also be used as a collection filter (`?is_main_image=true|false`) and sort column. The API stores a collision-resistant object path in `storage_path` and the original filename in `file_name`. GET collection and item responses include a dynamically generated `image_url` and `image_url_expires_at`; rows without a valid path or whose object is missing return these as `null`. Uploads support JPEG, PNG, WebP, and GIF up to 5 MB. DELETE removes the object and metadata row; the schema's `ON DELETE RESTRICT` applies if deleting a referenced parent shell directly in the database.
 
-Collection routes support `limit` (1–100, default 50), `offset` (default 0), `sort_by` (allowlisted per table), and `sort_order=asc|desc`. Table-specific filters include `shell_name`, `author`, `locality`, `shell_stock_type_id`, `shell_type_id`, `include_deleted`; `stock_name`; `shell_type_name`; `shell_id`, `shell_stock_id`; or `shell_id`, `file_name` respectively. Responses include `data` and `pagination` with `limit`, `offset`, and `total`.
+Collection routes support `limit` (1–100, default 50), `offset` (default 0), `sort_by` (allowlisted per table), and `sort_order=asc|desc`. Shell descriptions use `locality_id` to reference `shell_locality` and include nullable numeric `price` and `shell_weight` (weight unit is not defined by the database); filters include `shell_name`, `author`, `locality_id`, `price`, `shell_weight`, `shell_stock_type_id`, `shell_type_id`, and `include_deleted`. Locality collections can be filtered by `locality`. Other table filters include `stock_name`; `shell_type_name`; `shell_id`, `shell_stock_id`; or `shell_id`, `file_name` respectively. Responses include `data` and `pagination` with `limit`, `offset`, and `total`.
 
 The APIs validate request bodies, path IDs, and query parameters with **Zod**. Database defaults are omitted safely when fields aren’t supplied. Foreign-key and uniqueness errors are returned as `409`; malformed or invalid values are `400`; missing records are `404`.
 
-The API allows cross-origin browser requests and answers preflight `OPTIONS` requests. Health, OpenAPI documentation, and GET requests for shell descriptions, shell types, and shell images are public. Stock type and quantity APIs require a valid staff session. Inventory mutations require an admin or superadmin session; metadata reads require the superadmin role.
+The API allows cross-origin browser requests and answers preflight `OPTIONS` requests. Health, OpenAPI documentation, and GET requests for shell descriptions, shell types, shell localities, and shell images are public. Stock type and quantity APIs require a valid staff session. Inventory mutations require an admin or superadmin session; metadata reads require the superadmin role.
 
 Requests are limited to 10 per client IP in each one-second window. CORS preflight `OPTIONS` requests are excluded. The current limiter keeps counters in process memory, so when deployed as serverless functions each running instance enforces its own limit; use a shared rate-limit store for a globally consistent limit across instances.
 
@@ -67,7 +68,7 @@ Requests are limited to 10 per client IP in each one-second window. CORS preflig
 
 ## Insomnia
 
-Import [sell-shells.insomnia.json](sell-shells.insomnia.json) for ready-made requests across all five inventory tables and the auth role endpoints. After signing in, paste the Supabase access token into the base environment's `supabase_access_token`. Role-management requests require a superadmin token. After creating records, copy returned IDs into the collection environment. `shell_id`, `shell_stock_type_id`, and `shell_type_id` in relational requests must refer to rows that exist in your project.
+Import [sell-shells.insomnia.json](sell-shells.insomnia.json) for ready-made requests across the inventory tables and auth role endpoints. After signing in, paste the Supabase access token into the base environment's `supabase_access_token`. Role-management requests require a superadmin token. After creating records, copy returned IDs into the collection environment. `shell_id`, `shell_stock_type_id`, `shell_type_id`, and `locality_id` in relational requests must refer to rows that exist in your project.
 
 ## Swagger / OpenAPI
 

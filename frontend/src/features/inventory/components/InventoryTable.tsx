@@ -1,5 +1,5 @@
 import { Image as ImageIcon } from 'lucide-react';
-import type { Shell, ShellType, StockType } from '../../../shared/api';
+import type { Shell, ShellLocality, ShellType, StockType } from '../../../shared/api';
 import type { InventorySection } from '../types';
 
 type Row = Record<string, unknown>;
@@ -17,6 +17,7 @@ type Props = {
   shells: Shell[];
   stocks: StockType[];
   types: ShellType[];
+  localities: ShellLocality[];
   onEdit: (record: unknown) => void;
   onDelete: (record: unknown) => void;
 };
@@ -25,12 +26,12 @@ const textValue = (value: unknown, fallback = '—') => typeof value === 'string
 const dateValue = (row: Row) => new Date(String(row.created_at)).toLocaleDateString();
 const shellName = (id: unknown, shells: Shell[]) => shells.find(shell => shell.shell_id === id)?.shell_name || '—';
 
-export default function InventoryTable({ section, data, shells, stocks, types, onEdit, onDelete }: Props) {
+export default function InventoryTable({ section, data, shells, stocks, types, localities, onEdit, onDelete }: Props) {
   const config: Record<InventorySection, TableConfig> = {
     shells: {
-      columns: ['SHELL', 'AUTHOR', 'LOCALITY', 'TYPE', 'STOCK TYPE', 'ADDED'],
+      columns: ['SHELL', 'AUTHOR', 'LOCALITY', 'PRICE', 'WEIGHT', 'TYPE', 'STOCK TYPE', 'ADDED'],
       id: 'shell_id', title: row => textValue(row.shell_name, 'Untitled shell'), subtitle: row => textValue(row.from, 'Origin not recorded'),
-      values: row => [textValue(row.author), textValue(row.locality), types.find(type => type.type_id === row.shell_type_id)?.shell_type_name || '—', stocks.find(stock => stock.stock_id === row.shell_stock_type_id)?.stock_name || '—', dateValue(row)],
+      values: row => [textValue(row.author), localities.find(locality => locality.locality_id === row.locality_id)?.locality || '—', row.price == null ? '—' : String(row.price), row.shell_weight == null ? '—' : String(row.shell_weight), types.find(type => type.type_id === row.shell_type_id)?.shell_type_name || '—', stocks.find(stock => stock.stock_id === row.shell_stock_type_id)?.stock_name || '—', dateValue(row)],
     },
     'stock-types': {
       columns: ['STOCK TYPE', 'ID', 'CREATED'], id: 'stock_id', title: row => textValue(row.stock_name, 'Unnamed stock type'), subtitle: () => '',
@@ -39,6 +40,10 @@ export default function InventoryTable({ section, data, shells, stocks, types, o
     'shell-types': {
       columns: ['SHELL TYPE', 'ID', 'CREATED'], id: 'type_id', title: row => textValue(row.shell_type_name, 'Unnamed shell type'), subtitle: () => '',
       values: row => [textValue(row.type_id), dateValue(row)],
+    },
+    localities: {
+      columns: ['LOCALITY', 'ID', 'CREATED'], id: 'locality_id', title: row => textValue(row.locality, 'Unnamed locality'), subtitle: () => '',
+      values: row => [textValue(row.locality_id), dateValue(row)],
     },
     'stock-info': {
       columns: ['SHELL', 'STOCK TYPE', 'STOCKS', 'PCS / STOCK', 'TOTAL AVAILABLE', 'CREATED'], id: 'stock_info_id', title: row => shellName(row.shell_id, shells), subtitle: row => `Record #${String(row.stock_info_id ?? '')}`,
@@ -69,7 +74,7 @@ export default function InventoryTable({ section, data, shells, stocks, types, o
                 <td>{dateValue(row)}</td>
               </> : <>
                 <td><div className="primary-cell">{table.title(row)}</div><div className="secondary-cell">{table.subtitle(row)}</div></td>
-                {table.values(row).map((value, index) => <td key={`${table.id}-${index}`}>{section === 'shells' && index === 3 ? <span className="pill">{value}</span> : section === 'stock-info' && index === 3 ? <span className="quantity">{value}</span> : value}</td>)}
+                {table.values(row).map((value, index) => <td key={`${table.id}-${index}`}>{section === 'shells' && index === 4 ? <span className="pill">{value}</span> : section === 'stock-info' && index === 3 ? <span className="quantity">{value}</span> : value}</td>)}
               </>}
               <td><div className="row-actions"><button onClick={() => onEdit(raw)}>Edit</button><button className="delete-btn" onClick={() => onDelete(raw)} aria-label="Delete record">×</button></div></td>
             </tr>

@@ -31,7 +31,8 @@
         "shell_type_id": "88888888-8888-4888-8888-888888888888",
         "image_id": "55555555-5555-4555-8555-555555555555",
         "supabase_access_token": "paste-supabase-access-token-here",
-        "role_target_user_id": "77777777-7777-4777-8777-777777777777"
+        "role_target_user_id": "77777777-7777-4777-8777-777777777777",
+        "locality_id": "replace-with-locality-uuid"
       },
       "_type": "environment",
       "color": null,
@@ -139,7 +140,7 @@
       "method": "PATCH",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"note\": \"Updated from Insomnia\",\n  \"locality\": \"Cebu, Philippines\"\n}"
+        "text": "{\n  \"note\": \"Updated from Insomnia\",\n  \"locality_id\": \"{{ _.locality_id }}\",\n  \"price\": 42.5,\n  \"shell_weight\": 15.25\n}"
       },
       "headers": [
         {
@@ -242,7 +243,7 @@
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"shell_name\": \"Tiger Cowrie\",\n  \"author\": \"Linnaeus\",\n  \"locality\": \"Philippines\",\n  \"deepness\": \"Shallow water\",\n  \"from\": \"Collected\",\n  \"note\": \"Example shell description\",\n  \"is_deleted\": false\n}"
+        "text": "{\n  \"shell_name\": \"Tiger Cowrie\",\n  \"author\": \"Linnaeus\",\n  \"locality_id\": \"{{ _.locality_id }}\",\n  \"price\": 25,\n  \"deepness\": \"Shallow water\",\n  \"from\": \"Collected\",\n  \"note\": \"Example shell description\",\n  \"is_deleted\": false,\n  \"shell_weight\": 12.5\n}"
       },
       "headers": [
         {
@@ -1104,6 +1105,180 @@
       "preRequestScript": null,
       "afterResponseScript": null,
       "metaSortKey": -1030,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_shell_localities_list",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1791915743870,
+      "created": 1791915743870,
+      "url": "{{ _.base_url }}/api/shell-localities?limit=50&sort_by=locality&sort_order=asc",
+      "name": "List shell localities",
+      "description": "Works with the shell_locality locality lookup table.",
+      "method": "GET",
+      "body": {},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_locality_list_23"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -130,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_shell_localities_get",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1791915743870,
+      "created": 1791915743870,
+      "url": "{{ _.base_url }}/api/shell-localities/{{ _.locality_id }}",
+      "name": "Get shell locality",
+      "description": "Works with the shell_locality locality lookup table.",
+      "method": "GET",
+      "body": {},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_locality_get_24"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -131,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_shell_localities_create",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1791915743870,
+      "created": 1791915743870,
+      "url": "{{ _.base_url }}/api/shell-localities",
+      "name": "Create shell locality",
+      "description": "Works with the shell_locality locality lookup table.",
+      "method": "POST",
+      "body": {
+        "text": "{\n  \"locality\": \"Cebu, Philippines\"\n}",
+        "mimeType": "application/json"
+      },
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_locality_create_25"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -132,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_shell_localities_update",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1791915743870,
+      "created": 1791915743870,
+      "url": "{{ _.base_url }}/api/shell-localities/{{ _.locality_id }}",
+      "name": "Update shell locality",
+      "description": "Works with the shell_locality locality lookup table.",
+      "method": "PATCH",
+      "body": {
+        "text": "{\n  \"locality\": \"Bohol, Philippines\"\n}",
+        "mimeType": "application/json"
+      },
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_locality_update_26"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -133,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global"
+    },
+    {
+      "_id": "req_shell_localities_delete",
+      "parentId": "wrk_sell_shells_api",
+      "modified": 1791915743870,
+      "created": 1791915743870,
+      "url": "{{ _.base_url }}/api/shell-localities/{{ _.locality_id }}",
+      "name": "Delete shell locality",
+      "description": "Returns 409 if a shell_description row references this locality.",
+      "method": "DELETE",
+      "body": {},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.supabase_access_token }}",
+          "id": "pair_auth_locality_delete_27"
+        }
+      ],
+      "authentication": {},
+      "_type": "request",
+      "parameters": [],
+      "pathParameters": [],
+      "preRequestScript": null,
+      "afterResponseScript": null,
+      "metaSortKey": -134,
       "isPrivate": false,
       "settingStoreCookies": true,
       "settingSendCookies": true,

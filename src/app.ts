@@ -1,6 +1,7 @@
 import "./config/env";
 import express from "express";
 import shellsRouter from "./routes/shells";
+import shellLocalitiesRouter from "./routes/shell-localities";
 import shellStockTypesRouter from "./routes/shell-stock-types";
 import shellTypesRouter from "./routes/shell-type";
 import stockInfoRouter from "./routes/stock-info";
@@ -35,6 +36,7 @@ app.get("/health", (_request, response) => {
 });
 app.use("/api/auth", authRouter);
 app.use("/api/shells", optionalAuthenticate, requireInventoryWriteRole, shellsRouter);
+app.use("/api/shell-localities", optionalAuthenticate, requireInventoryWriteRole, shellLocalitiesRouter);
 app.use("/api/shell-stock-types", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, shellStockTypesRouter);
 app.use("/api/shell-types", optionalAuthenticate, requireInventoryWriteRole, shellTypesRouter);
 app.use("/api/stock-info", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, stockInfoRouter);

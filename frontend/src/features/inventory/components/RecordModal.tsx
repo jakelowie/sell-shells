@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { CircleAlert, LoaderCircle, X } from 'lucide-react';
-import type { Shell, ShellType, StockType } from '../../../shared/api';
+import type { Shell, ShellLocality, ShellType, StockType } from '../../../shared/api';
 import type { InventorySection } from '../types';
 
 type DialogState = { mode: 'create' | 'edit'; item?: Record<string, unknown> };
@@ -10,13 +10,14 @@ type Props = {
   shells: Shell[];
   stocks: StockType[];
   types: ShellType[];
+  localities: ShellLocality[];
   saving: boolean;
   error: string;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export default function RecordModal({ section, dialog, shells, stocks, types, saving, error, onClose, onSubmit }: Props) {
+export default function RecordModal({ section, dialog, shells, stocks, types, localities, saving, error, onClose, onSubmit }: Props) {
   const edit = dialog.mode === 'edit';
   const item = dialog.item ?? {};
   const field = (name: string) => item[name] ?? '';
@@ -38,7 +39,7 @@ export default function RecordModal({ section, dialog, shells, stocks, types, sa
       </select>
     </label>
   );
-  const recordName = section === 'shells' ? 'shell' : section === 'images' ? 'image' : section === 'stock-info' ? 'stock record' : section === 'stock-types' ? 'stock type' : 'shell type';
+  const recordName = section === 'shells' ? 'shell' : section === 'images' ? 'image' : section === 'stock-info' ? 'stock record' : section === 'stock-types' ? 'stock type' : section === 'shell-types' ? 'shell type' : 'locality';
   const computedTotal = stockCount !== '' && piecesPerStock !== '' && Number.isFinite(Number(stockCount) * Number(piecesPerStock)) ? Number(stockCount) * Number(piecesPerStock) : '';
 
   return (
@@ -51,13 +52,15 @@ export default function RecordModal({ section, dialog, shells, stocks, types, sa
         <div className="modal-fields">
           {section === 'shells' && <>
             {input('shell_name', 'Shell name', { placeholder: 'e.g. Conus textile' })}
-            <div className="field-grid">{input('author', 'Author', { placeholder: 'Species author' })}{input('locality', 'Locality', { placeholder: 'Collection location' })}{input('deepness', 'Deepness', { placeholder: 'Depth or range' })}{input('from', 'Source', { placeholder: 'Source or provenance' })}</div>
+            <div className="field-grid">{input('author', 'Author', { placeholder: 'Species author' })}{input('deepness', 'Deepness', { placeholder: 'Depth or range' })}{input('from', 'Source', { placeholder: 'Source or provenance' })}{input('price', 'Price', { type: 'number', step: 'any', placeholder: 'Amount' })}{input('shell_weight', 'Weight', { type: 'number', step: 'any', placeholder: 'Weight (unit not specified)' })}</div>
+            {select('locality_id', 'Locality', localities.map(locality => ({ id: locality.locality_id, label: locality.locality || locality.locality_id })))}
             {select('shell_type_id', 'Shell type', types.map(type => ({ id: type.type_id, label: type.shell_type_name || type.type_id })))}
             {select('shell_stock_type_id', 'Stock type', stocks.map(stock => ({ id: stock.stock_id, label: stock.stock_name || stock.stock_id })))}
             <label className="field"><span>Note</span><textarea name="note" defaultValue={String(field('note'))} rows={3} placeholder="Additional observations" /></label>
           </>}
           {section === 'stock-types' && input('stock_name', 'Stock name', { placeholder: 'e.g. Small display box' })}
           {section === 'shell-types' && input('shell_type_name', 'Shell type name', { placeholder: 'e.g. Gastropod' })}
+          {section === 'localities' && input('locality', 'Locality name', { placeholder: 'e.g. Cebu, Philippines' })}
           {section === 'stock-info' && <>
             {select('shell_id', 'Shell', shells.map(shell => ({ id: shell.shell_id, label: shell.shell_name || shell.shell_id })))}
             {select('shell_stock_id', 'Stock type', stocks.map(stock => ({ id: stock.stock_id, label: stock.stock_name || stock.stock_id })))}

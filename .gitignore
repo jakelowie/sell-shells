@@ -2,3 +2,9 @@ node_modules/
 dist/
 .env
 supabase/
+!supabase/
+supabase/*
+!supabase/migrations/
+supabase/migrations/*
+!supabase/migrations/20261016020000_shell_localities_and_price.sql
+!supabase/migrations/20261016030000_shell_weight.sql

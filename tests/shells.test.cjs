@@ -5,6 +5,7 @@ const http = require("node:http");
 const shellId = "11111111-1111-4111-8111-111111111111";
 const stockTypeId = "33333333-3333-4333-8333-333333333333";
 const shellImageId = "55555555-5555-4555-8555-555555555555";
+const localityId = "77777777-7777-4777-8777-777777777777";
 const appUsers = {
   "user-token": { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", email: "reader@example.com" },
   "admin-token": { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", email: "admin@example.com" },
@@ -16,7 +17,8 @@ const ids = {
   shell_description: "22222222-2222-4222-8222-222222222222",
   shell_stock_type: "44444444-4444-4444-8444-444444444444",
   shell_type: "88888888-8888-4888-8888-888888888888",
-  shell_images: "66666666-6666-4666-8666-666666666666"
+  shell_images: "66666666-6666-4666-8666-666666666666",
+  shell_locality: localityId
 };
 let records;
 let dbServer;
@@ -138,7 +140,8 @@ function databaseHandler(request, response) {
       sendDbError(response, 403, "42501", "Only admins can mutate inventory.");
       return;
     }
-    const idColumn = table === "shell_stock_type" ? "stock_id"
+    const idColumn = table === "shell_locality" ? "locality_id"
+      : table === "shell_stock_type" ? "stock_id"
       : table === "shell_type" ? "type_id"
         : table === "shell_description" ? "shell_id"
           : table === "shell_images" ? "image_id"
@@ -178,7 +181,9 @@ function databaseHandler(request, response) {
         return;
       }
       const newRow = table === "shell_description"
-        ? { shell_id: body.shell_id ?? ids.shell_description, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", shell_name: "", author: "", locality: "", deepness: "", from: "", note: null, is_deleted: null, shell_stock_type_id: null, shell_type_id: null, ...body }
+        ? { shell_id: body.shell_id ?? ids.shell_description, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", shell_name: "", author: "", deepness: "", from: "", note: null, is_deleted: null, shell_stock_type_id: null, shell_type_id: null, price: null, locality_id: null, shell_weight: null, ...body }
+        : table === "shell_locality"
+          ? { locality_id: body.locality_id ?? ids.shell_locality, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", locality: null, ...body }
         : table === "shell_stock_type"
           ? { stock_id: body.stock_id ?? ids.shell_stock_type, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", stock_name: null, ...body }
           : table === "shell_type"
@@ -200,6 +205,10 @@ function databaseHandler(request, response) {
           sendDbError(response, 409, "23503", "shell_stock_id foreign key violation");
           return;
         }
+      }
+      if (table === "shell_description" && newRow.locality_id && !records.shell_locality.some((row) => row.locality_id === newRow.locality_id)) {
+        sendDbError(response, 409, "23503", "locality_id foreign key violation");
+        return;
       }
       if (table === "shell_images" && newRow.shell_id && !records.shell_description.some((row) => row.shell_id === newRow.shell_id)) {
         sendDbError(response, 409, "23503", "shell_id foreign key violation");
@@ -226,6 +235,10 @@ function databaseHandler(request, response) {
           return;
         }
       }
+      if (table === "shell_description" && updated.locality_id && !records.shell_locality.some((row) => row.locality_id === updated.locality_id)) {
+        sendDbError(response, 409, "23503", "locality_id foreign key violation");
+        return;
+      }
       if (table === "shell_images" && updated.shell_id && !records.shell_description.some((row) => row.shell_id === updated.shell_id)) {
         sendDbError(response, 409, "23503", "shell_id foreign key violation");
         return;
@@ -237,6 +250,10 @@ function databaseHandler(request, response) {
     if (method === "DELETE") {
       if (table === "shell_stock_type" && records.shell_stocks_info.some((row) => row.shell_stock_id === selected[0]?.stock_id)) {
         sendDbError(response, 409, "23503", "stock type is referenced by stock_info");
+        return;
+      }
+      if (table === "shell_locality" && records.shell_description.some((row) => row.locality_id === selected[0]?.locality_id)) {
+        sendDbError(response, 409, "23503", "locality is referenced by shell_description");
         return;
       }
       if (table === "shell_description" && records.shell_images.some((row) => row.shell_id === selected[0]?.shell_id)) {
@@ -254,9 +271,10 @@ function databaseHandler(request, response) {
 
 before(async () => {
   records = {
-    shell_description: [{ shell_id: shellId, created_at: "2026-10-13T00:00:00.000Z", shell_name: "Tiger Cowrie", author: "Linnaeus", locality: "Philippines", deepness: "Shallow water", from: "Collected", note: null, is_deleted: false, shell_stock_type_id: stockTypeId, shell_type_id: ids.shell_type }],
+    shell_description: [{ shell_id: shellId, created_at: "2026-10-13T00:00:00.000Z", shell_name: "Tiger Cowrie", author: "Linnaeus", locality_id: localityId, price: 25, shell_weight: 12.5, deepness: "Shallow water", from: "Collected", note: null, is_deleted: false, shell_stock_type_id: stockTypeId, shell_type_id: ids.shell_type }],
     shell_stock_type: [{ stock_id: stockTypeId, created_at: "2026-10-13T00:00:00.000Z", stock_name: "Bulk" }],
     shell_type: [{ type_id: ids.shell_type, created_at: "2026-10-13T00:00:00.000Z", shell_type_name: "Cowrie" }],
+    shell_locality: [{ locality_id: localityId, created_at: "2026-10-13T00:00:00.000Z", locality: "Philippines" }],
     shell_stocks_info: [{ stock_info_id: 101, created_at: "2026-10-13T00:00:00.000Z", shell_id: shellId, shell_stock_id: stockTypeId, shell_stock: 2.5, shell_pcs_per_stock: 12, shell_total_available: 30 }],
     shell_images: [{ image_id: shellImageId, created_at: "2026-10-13T00:00:00.000Z", file_name: "tiger-cowrie.jpg", storage_path: null, is_main_image: false, shell_id: shellId }],
     user_roles: [
@@ -361,8 +379,10 @@ test("health and shell description CRUD use Supabase", async () => {
   assert.match(created.body.data.shell_id, /^[0-9a-f-]{36}$/i);
   assert.equal(created.body.data.shell_stock_type_id, null);
 
-  const updated = await api(`/api/shells/${created.body.data.shell_id}`, { method: "PATCH", body: { locality: "Cebu" } });
-  assert.equal(updated.body.data.locality, "Cebu");
+  const updated = await api(`/api/shells/${created.body.data.shell_id}`, { method: "PATCH", body: { locality_id: localityId, price: 42.5, shell_weight: 18.25 } });
+  assert.equal(updated.body.data.locality_id, localityId);
+  assert.equal(updated.body.data.price, 42.5);
+  assert.equal(updated.body.data.shell_weight, 18.25);
   const deleted = await api(`/api/shells/${shellId}`, { method: "DELETE" });
   assert.equal(deleted.body.data.is_deleted, true);
   assert.equal((await api(`/api/shells/${shellId}`)).status, 404);
@@ -391,6 +411,32 @@ test("shell types support CRUD and filter shell descriptions", async () => {
   const filteredShells = await api(`/api/shells?shell_type_id=${ids.shell_type}&include_deleted=true`);
   assert.equal(filteredShells.body.data[0].shell_id, shellId);
   assert.equal((await api(`/api/shell-types/${created.body.data.type_id}`, { method: "DELETE" })).status, 200);
+});
+
+test("shell localities support CRUD and shell locality, price, and weight schema", async () => {
+  const filtered = await api("/api/shell-localities?locality=Philippines");
+  assert.equal(filtered.status, 200);
+  assert.equal(filtered.body.data[0].locality_id, localityId);
+  assert.equal((await api(`/api/shell-localities/${localityId}`)).body.data.locality, "Philippines");
+  assert.equal((await api(`/api/shell-localities/${localityId}`, { method: "DELETE" })).status, 409);
+
+  const newId = "12121212-1212-4121-8121-121212121212";
+  const created = await api("/api/shell-localities", { method: "POST", body: { locality_id: newId, locality: "Cebu" } });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const updated = await api(`/api/shell-localities/${newId}`, { method: "PATCH", body: { locality: "Cebu, Philippines" } });
+  assert.equal(updated.body.data.locality, "Cebu, Philippines");
+  assert.equal((await api(`/api/shell-localities/${newId}`, { method: "DELETE" })).status, 200);
+
+  const shellList = await api(`/api/shells?locality_id=${localityId}&price=25&include_deleted=true`);
+  assert.equal(shellList.status, 200);
+  assert.equal(shellList.body.data[0].locality_id, localityId);
+  assert.equal(shellList.body.data[0].price, 25);
+  assert.equal(shellList.body.data[0].shell_weight, 12.5);
+  assert.equal((await api(`/api/shells?shell_weight=12.5&include_deleted=true`)).body.data[0].shell_id, shellId);
+  assert.equal((await api("/api/shells", { method: "POST", body: { shell_weight: "not-a-number" } })).status, 400);
+  const invalidLocality = await api("/api/shells", { method: "POST", body: { locality_id: newId, price: 10 } });
+  assert.equal(invalidLocality.status, 409);
+  assert.equal((await api("/api/shells", { method: "POST", body: { price: "not-a-number" } })).status, 400);
 });
 
 test("shell stocks info supports CRUD, filtering, numeric fields, and FK validation", async () => {

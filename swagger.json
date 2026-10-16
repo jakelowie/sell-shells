@@ -39,6 +39,9 @@
     },
     {
       "name": "Role management"
+    },
+    {
+      "name": "Shell localities"
     }
   ],
   "paths": {
@@ -84,7 +87,10 @@
                 "created_at",
                 "shell_name",
                 "author",
-                "locality"
+                "deepness",
+                "price",
+                "locality_id",
+                "shell_weight"
               ],
               "default": "created_at"
             }
@@ -122,12 +128,13 @@
             }
           },
           {
-            "name": "locality",
+            "name": "locality_id",
             "in": "query",
             "required": false,
-            "description": "Exact locality.",
+            "description": "Locality UUID.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           },
           {
@@ -162,6 +169,24 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "price",
+            "in": "query",
+            "required": false,
+            "description": "Exact numeric price.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "shell_weight",
+            "in": "query",
+            "required": false,
+            "description": "Exact numeric shell weight.",
+            "schema": {
+              "type": "number"
             }
           }
         ],
@@ -2991,6 +3016,431 @@
           }
         }
       }
+    },
+    "/api/shell-localities": {
+      "get": {
+        "tags": [
+          "Shell localities"
+        ],
+        "operationId": "listShellLocalities",
+        "summary": "List shell localitys",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum records to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Number of records to skip.",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "required": false,
+            "description": "Column used to sort the result.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "locality"
+              ],
+              "default": "locality"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "description": "Sort direction.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "locality",
+            "in": "query",
+            "required": false,
+            "description": "Exact stock name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locality",
+            "in": "query",
+            "required": false,
+            "description": "Exact locality name.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "pagination"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ShellLocality"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shell localities"
+        ],
+        "operationId": "createShellLocality",
+        "summary": "Create shell localitys",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShellLocalityCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShellLocality"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Database constraint violation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/shell-localities/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Shell locality UUID (locality_id).",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Shell localities"
+        ],
+        "operationId": "getShellLocality",
+        "summary": "Get shell localitys by ID",
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShellLocality"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid record ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Shell localities"
+        ],
+        "operationId": "updateShellLocality",
+        "summary": "Update shell localitys",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShellLocalityUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShellLocality"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid ID or request body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Database constraint violation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Shell localities"
+        ],
+        "operationId": "deleteShellLocality",
+        "summary": "Delete shell localitys",
+        "description": "Returns 409 if referenced by a shell_stocks_info row.",
+        "responses": {
+          "200": {
+            "description": "Deleted record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShellLocality"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid record ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Database constraint violation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -3063,13 +3513,15 @@
           "created_at",
           "shell_name",
           "author",
-          "locality",
           "deepness",
           "from",
           "note",
           "is_deleted",
           "shell_stock_type_id",
-          "shell_type_id"
+          "shell_type_id",
+          "price",
+          "locality_id",
+          "shell_weight"
         ],
         "properties": {
           "created_at": {
@@ -3083,12 +3535,6 @@
             ]
           },
           "author": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "locality": {
             "type": [
               "string",
               "null"
@@ -3135,6 +3581,25 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "price": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "locality_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "shell_weight": {
+            "type": [
+              "number",
+              "null"
+            ]
           }
         }
       },
@@ -3158,12 +3623,6 @@
               "null"
             ]
           },
-          "locality": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "deepness": {
             "type": [
               "string",
@@ -3205,6 +3664,25 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "price": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "locality_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "shell_weight": {
+            "type": [
+              "number",
+              "null"
+            ]
           }
         }
       },
@@ -3688,6 +4166,58 @@
             "$ref": "#/components/schemas/AppRole"
           }
         }
+      },
+      "ShellLocality": {
+        "type": "object",
+        "required": [
+          "locality_id",
+          "created_at",
+          "locality"
+        ],
+        "properties": {
+          "locality_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "locality": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ShellLocalityCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "locality_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "locality": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ShellLocalityUpdate": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ShellLocalityCreate"
+          }
+        ],
+        "minProperties": 1
       }
     },
     "securitySchemes": {

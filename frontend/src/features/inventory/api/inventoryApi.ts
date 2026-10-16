@@ -1,10 +1,11 @@
-import { list, mutate, record, request, type Shell, type ShellImage, type ShellType, type StockInfo, type StockType } from '../../../shared/api';
+import { list, mutate, record, request, type Shell, type ShellImage, type ShellLocality, type ShellType, type StockInfo, type StockType } from '../../../shared/api';
 import type { InventorySection } from '../types';
 
 export const INVENTORY_ENDPOINTS: Record<InventorySection, string> = {
   shells: '/api/shells',
   'stock-types': '/api/shell-stock-types',
   'shell-types': '/api/shell-types',
+  localities: '/api/shell-localities',
   'stock-info': '/api/shell-stocks-info',
   images: '/api/shell-images',
 };
@@ -13,6 +14,7 @@ const RECORD_ID_FIELD: Record<InventorySection, string> = {
   shells: 'shell_id',
   'stock-types': 'stock_id',
   'shell-types': 'type_id',
+  localities: 'locality_id',
   'stock-info': 'stock_info_id',
   images: 'image_id',
 };
@@ -26,6 +28,7 @@ export function inventoryRecordId(section: InventorySection, item: unknown): str
 export function inventoryRecordLabel(section: InventorySection, item: unknown): string {
   const record = item as Record<string, string | null>;
   if (section === 'shells') return record.shell_name || 'this shell';
+  if (section === 'localities') return record.locality || 'this locality';
   if (section === 'images') return record.file_name || 'this image';
   return 'this record';
 }
@@ -43,18 +46,20 @@ export async function listInventory(section: InventorySection, page: number, pag
   }
   if (section === 'stock-types' && search) params.stock_name = search;
   if (section === 'shell-types' && search) params.shell_type_name = search;
+  if (section === 'localities' && search) params.locality = search;
   if (section === 'stock-info' && search) params.shell_id = search;
   if (section === 'images' && search) params.file_name = search;
   return list<unknown>(INVENTORY_ENDPOINTS[section], params);
 }
 
 export async function listInventoryLookups() {
-  const [shellPage, stockPage, typePage] = await Promise.all([
+  const [shellPage, stockPage, typePage, localityPage] = await Promise.all([
     list<Shell>('/api/shells', { limit: 100, offset: 0 }),
     list<StockType>('/api/shell-stock-types', { limit: 100, offset: 0 }),
     list<ShellType>('/api/shell-types', { limit: 100, offset: 0 }),
+    list<ShellLocality>('/api/shell-localities', { limit: 100, offset: 0 }),
   ]);
-  return { shells: shellPage.data, stocks: stockPage.data, types: typePage.data };
+  return { shells: shellPage.data, stocks: stockPage.data, types: typePage.data, localities: localityPage.data };
 }
 
 export async function getInventoryRecord(section: InventorySection, id: string | number) {
@@ -74,13 +79,18 @@ export async function saveInventoryRecord(section: InventorySection, form: HTMLF
   }
 
   if (section === 'shells') {
-    for (const field of ['shell_name', 'author', 'locality', 'deepness', 'from', 'note']) body[field] = values[field] || null;
+    for (const field of ['shell_name', 'author', 'deepness', 'from', 'note']) body[field] = values[field] || null;
     body.shell_stock_type_id = values.shell_stock_type_id || null;
     body.shell_type_id = values.shell_type_id || null;
+    body.locality_id = values.locality_id || null;
+    body.price = values.price === '' ? null : Number(values.price);
+    body.shell_weight = values.shell_weight === '' ? null : Number(values.shell_weight);
   } else if (section === 'stock-types') {
     body.stock_name = values.stock_name || null;
   } else if (section === 'shell-types') {
     body.shell_type_name = values.shell_type_name || null;
+  } else if (section === 'localities') {
+    body.locality = values.locality || null;
   } else if (section === 'stock-info') {
     body = { shell_id: values.shell_id || null, shell_stock_id: values.shell_stock_id || null };
     for (const field of ['shell_stock', 'shell_pcs_per_stock']) body[field] = values[field] === '' ? null : Number(values[field]);
@@ -109,4 +119,4 @@ export function deleteInventoryRecord(section: InventorySection, id: string | nu
   return mutate(`${INVENTORY_ENDPOINTS[section]}/${encodeURIComponent(String(id))}`, 'DELETE');
 }
 
-export type InventoryRecord = Shell | StockType | ShellType | StockInfo | ShellImage;
+export type InventoryRecord = Shell | StockType | ShellType | ShellLocality | StockInfo | ShellImage;

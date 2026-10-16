@@ -64,7 +64,7 @@ If a route returns a server error, inspect the API project's **Deployments → F
 
 ## 3. Verify the deployed connection
 
-Open the frontend without signing in and confirm shell types, shells, and signed image URLs load. Customer browsing is public. To enable the staff manager, provision staff accounts through Supabase Auth (Dashboard or invite), allow the frontend origin in Supabase Auth redirect URLs as needed, and bootstrap the first superadmin using the SQL instructions in the README. `/admin` and inventory mutations require `admin` or `superadmin`. If the browser reports a CORS error, confirm the backend deployment includes the CORS middleware and redeploy it. CORS currently allows all origins and preflight requests.
+Open the frontend without signing in and confirm shell types, shells, locality names, prices, and signed image URLs load. Customer browsing is public. To enable the staff manager, provision staff accounts through Supabase Auth (Dashboard or invite), allow the frontend origin in Supabase Auth redirect URLs as needed, and bootstrap the first superadmin using the SQL instructions in the README. `/admin` and inventory mutations require `admin` or `superadmin`. If the browser reports a CORS error, confirm the backend deployment includes the CORS middleware and redeploy it. CORS currently allows all origins and preflight requests.
 
 The API applies a limit of 10 requests per second per client IP. Its counters are stored in process memory, so Vercel instances enforce their limits independently rather than sharing one global counter.
 

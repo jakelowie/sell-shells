@@ -11,6 +11,7 @@ import type {
 import type { StockInfo, StockInfoInsert, StockInfoUpdate } from "../validation/stock-info";
 import type { ShellImage, ShellImageInsert, ShellImageUpdate } from "../validation/shell-image";
 import type { ShellType, ShellTypeInsert, ShellTypeUpdate } from "../validation/shell-type";
+import type { ShellLocality, ShellLocalityInsert, ShellLocalityUpdate } from "../validation/shell-locality";
 
 export type AppRole = "user" | "admin" | "superadmin";
 export type UserRole = {
@@ -34,6 +35,13 @@ type ShellDescriptionTypeRelationship = {
   isOneToOne: false;
   referencedRelation: "shell_type";
   referencedColumns: ["type_id"];
+};
+type ShellDescriptionLocalityRelationship = {
+  foreignKeyName: "shell_description_locality_id_fkey";
+  columns: ["locality_id"];
+  isOneToOne: false;
+  referencedRelation: "shell_locality";
+  referencedColumns: ["locality_id"];
 };
 type ShellDescriptionStockRelationship = {
   foreignKeyName: "stock_info_shell_id_fkey";
@@ -64,7 +72,13 @@ export type Database = {
         Row: ShellDescription;
         Insert: ShellDescriptionInsert;
         Update: ShellDescriptionUpdate;
-        Relationships: [ShellDescriptionStockTypeRelationship, ShellDescriptionTypeRelationship];
+        Relationships: [ShellDescriptionStockTypeRelationship, ShellDescriptionTypeRelationship, ShellDescriptionLocalityRelationship];
+      };
+      shell_locality: {
+        Row: ShellLocality;
+        Insert: ShellLocalityInsert;
+        Update: ShellLocalityUpdate;
+        Relationships: [];
       };
       shell_stock_type: {
         Row: ShellStockType;
