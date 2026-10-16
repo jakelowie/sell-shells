@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, CircleAlert, Image as ImageIcon, LoaderCircle, MapPin, Shell, Sparkles } from 'lucide-react';
-import { getAllImagesForShell, getShellById, getShellLocalities, getShellsForType, getShellTypes, type Shell as ShellRecord, type ShellImage, type ShellLocality, type ShellType } from '../../shared/api';
-import { useAuth } from '../auth/AuthProvider';
+import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, CircleAlert, Image as ImageIcon, LoaderCircle, MapPin, Shell, ShoppingBag, Sparkles } from 'lucide-react';
+import { addShopCartItem, getAllImagesForShell, getShopAvailability, getShopConfig, getShellById, getShellImagesForShells, getShellLocalities, getShellsForType, getShellTypes, type Shell as ShellRecord, type ShellImage, type ShellLocality, type ShellType, type ShopConfig } from '../../shared/api';
+import { ShopCartPage, ShopCheckoutPage, ShopOrderPage, ShopOrdersPage } from './ShopPages';
+import { StoreFooter, StoreHeader } from './StoreChrome';
 
 const PAGE_SIZE = 12;
 const title = (shell: ShellRecord) => shell.shell_name || 'Untitled shell';
+const formatPrice = (price: number, currency: string | null) => currency
+  ? new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(price)
+  : `${new Intl.NumberFormat().format(price)} · currency not set`;
 
 export default function CustomerApp({ path, onNavigate }: { path: string; onNavigate: (path: string) => void }) {
+  if (path === '/cart') return <ShopCartPage onNavigate={onNavigate} />;
+  if (path === '/checkout') return <ShopCheckoutPage onNavigate={onNavigate} />;
+  if (path === '/orders') return <ShopOrdersPage onNavigate={onNavigate} />;
+  const orderMatch = path.match(/^\/orders\/([^/]+)\/?$/);
+  if (orderMatch) return <ShopOrderPage orderId={decodeURIComponent(orderMatch[1])} onNavigate={onNavigate} />;
   const detailMatch = path.match(/^\/customers\/shell\/([^/]+)\/?$/);
-  useEffect(() => { document.title = detailMatch ? 'Shell details — Shellhouse' : 'Shellhouse — The Shell Collection'; }, [detailMatch, path]);
   if (detailMatch) return <ShellDetails shellId={decodeURIComponent(detailMatch[1])} onNavigate={onNavigate} />;
   const typeFromPath = path.match(/^\/customers\/([^/]+)\/?$/);
   return <Storefront selectedTypeId={typeFromPath ? decodeURIComponent(typeFromPath[1]) : ''} onSelectType={id => onNavigate(id ? `/customers/${encodeURIComponent(id)}` : '/customers')} onNavigate={onNavigate} />;
@@ -22,6 +30,8 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
   const [initialTypeId, setInitialTypeId] = useState('');
   const [shells, setShells] = useState<ShellRecord[]>([]);
   const [images, setImages] = useState<Record<string, ShellImage | undefined>>({});
+  const [availability, setAvailability] = useState<Record<string, number>>({});
+  const [shopConfig, setShopConfig] = useState<ShopConfig | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -30,6 +40,8 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
   const [failed, setFailed] = useState<string[]>([]);
   const activeTypeId = selectedTypeId || initialTypeId;
   const selectedType = types.find(type => type.type_id === activeTypeId);
+
+  useEffect(() => { document.title = 'Shellhouse — The Shell Collection'; }, []);
 
   const loadTypes = useCallback(() => {
     let active = true;
@@ -55,21 +67,24 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
   }, []);
 
   useEffect(() => {
+    let active = true;
+    getShopConfig().then(result => { if (active) setShopConfig(result.data); }).catch(() => { if (active) setShopConfig(null); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     if (!activeTypeId || !selectedType) { setShells([]); setImages({}); setTotal(0); return; }
     let active = true;
     setLoading(true); setShellError(''); setFailed([]);
     getShellsForType(activeTypeId, page * PAGE_SIZE, PAGE_SIZE).then(async result => {
       if (!active) return;
       setShells(result.data); setTotal(result.pagination.total);
-      const pairs = await Promise.all(result.data.map(async shell => {
-        try {
-          const response = await getAllImagesForShell(shell.shell_id);
-          const bestImage = response.find(image => image.is_main_image && image.image_url) ?? response.find(image => image.image_url);
-          return [shell.shell_id, bestImage] as const;
-        } catch { return [shell.shell_id, undefined] as const; }
-      }));
-      if (active) setImages(Object.fromEntries(pairs));
-    }).catch(error => { if (active) { setShells([]); setImages({}); setTotal(0); setShellError((error as Error).message); } })
+      const [imageMap, stock] = await Promise.all([
+        getShellImagesForShells(result.data.map(shell => shell.shell_id)).catch((): Record<string, ShellImage | undefined> => ({})),
+        getShopAvailability(result.data.map(shell => shell.shell_id)).catch((): Record<string, number> => ({}))
+      ]);
+      if (active) { setImages(imageMap); setAvailability(stock); }
+    }).catch(error => { if (active) { setShells([]); setImages({}); setAvailability({}); setTotal(0); setShellError((error as Error).message); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [activeTypeId, page, retry, selectedType]);
@@ -307,9 +322,12 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
                       {shell.price != null && (
                         <div className="product-price">
                           <span>Price</span>
-                          <strong>{shell.price} $</strong>
+                          <strong>{formatPrice(shell.price, shopConfig?.currency ?? null)}</strong>
                         </div>
                       )}
+                      <div className={`product-availability ${availability[shell.shell_id] > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                        {availability[shell.shell_id] === undefined ? 'Checking availability…' : availability[shell.shell_id] > 0 ? `${availability[shell.shell_id]} available` : 'Currently unavailable'}
+                      </div>
                       {shell.shell_weight != null && (
                         <div className="product-weight">
                           <span>Weight</span>
@@ -382,6 +400,13 @@ function ShellDetails({
   const [lightbox, setLightbox] = useState(false);
   const [freshening, setFreshening] = useState(false);
   const [urlRetries, setUrlRetries] = useState<string[]>([]);
+  const [shopConfig, setShopConfig] = useState<ShopConfig | null>(null);
+  const [availability, setAvailability] = useState<number | null>(null);
+  const [stockLoading, setStockLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
+  const [cartError, setCartError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -395,6 +420,9 @@ function ShellDetails({
     setSelectedImage(0);
     setBroken([]);
     setUrlRetries([]);
+    setAvailability(null);
+    setCartMessage('');
+    setCartError('');
 
     Promise.all([
       getShellById(shellId),
@@ -459,6 +487,20 @@ function ShellDetails({
       active = false;
     };
   }, [retry, shellId]);
+
+  useEffect(() => {
+    let active = true;
+    setStockLoading(true);
+    Promise.all([
+      getShopConfig().catch(() => null),
+      getShopAvailability([shellId]).catch((): Record<string, number> => ({}))
+    ]).then(([config, stock]) => {
+      if (!active) return;
+      setShopConfig(config?.data ?? null);
+      setAvailability(stock[shellId] ?? 0);
+    }).finally(() => { if (active) setStockLoading(false); });
+    return () => { active = false; };
+  }, [shellId]);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -537,7 +579,7 @@ function ShellDetails({
         ['Source', shell.from],
         [
           'Price',
-          shell.price == null ? null : String(shell.price) + ' $',
+          shell.price == null ? null : formatPrice(shell.price, shopConfig?.currency ?? null),
         ],
         ['Weight', shell.shell_weight == null ? null : String(shell.shell_weight) + ' kg'],
       ].filter((row): row is [string, string] => Boolean(row[1]))
@@ -735,6 +777,39 @@ function ShellDetails({
                   </div>
                 )}
 
+                <section className="detail-buy-box" aria-label="Add specimen to cart">
+                  <div className="detail-stock-status">
+                    {stockLoading ? 'Checking availability…' : availability && availability > 0
+                      ? `${availability} available`
+                      : 'Currently unavailable'}
+                  </div>
+                  <div className="detail-buy-controls">
+                    <label className="detail-quantity">Quantity
+                      <input
+                        type="number" min={1} max={Math.max(1, availability ?? 1)} step={1}
+                        value={quantity}
+                        onChange={event => setQuantity(Math.max(1, Math.min(Number(event.target.value) || 1, availability ?? 1)))}
+                        disabled={!availability || stockLoading}
+                      />
+                    </label>
+                    <button
+                      className="detail-add-button"
+                      disabled={!shell.price || shell.price <= 0 || Boolean(shell.is_deleted) || !availability || stockLoading || addingToCart}
+                      onClick={() => {
+                        setAddingToCart(true); setCartMessage(''); setCartError('');
+                        void addShopCartItem(shellId, quantity)
+                          .then(() => setCartMessage('Added to your bag.'))
+                          .catch(error => setCartError((error as Error).message))
+                          .finally(() => setAddingToCart(false));
+                      }}
+                    >
+                      <ShoppingBag size={15} />{addingToCart ? 'Adding…' : 'Add to bag'}
+                    </button>
+                  </div>
+                  {cartMessage && <p className="shop-success-message" role="status">{cartMessage}</p>}
+                  {cartError && <p className="shop-error-message" role="alert">{cartError}</p>}
+                </section>
+
                 <a
                   className="detail-collection-link"
                   href="/customers"
@@ -777,14 +852,4 @@ function ShellDetails({
       )}
     </div>
   );
-}
-
-function StoreHeader({ onNavigate }: { onNavigate: (path: string) => void }) {
-  const { user, role, signOut } = useAuth();
-  const isStaff = role === 'admin' || role === 'superadmin';
-  return <header className="store-header"><a href="/customers" className="store-brand" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}><span className="store-brand-mark"><Shell size={21} /></span><span>shellhouse<small>THE SHELL COLLECTION</small></span></a><nav className="store-header-nav"><a href="/customers#collection" onClick={event => { if (window.location.pathname !== '/customers') { event.preventDefault(); onNavigate('/customers'); } }}>The collection</a><a href="/customers#about">Our approach</a></nav><div className="store-header-actions"><a className="header-collection-link" href="/customers#collection" onClick={event => { if (window.location.pathname !== '/customers') { event.preventDefault(); onNavigate('/customers'); } }}>Explore <ArrowRight size={14} /></a>{isStaff ? <><a className="store-signout" href="/admin" onClick={event => { event.preventDefault(); onNavigate('/admin'); }}>Admin</a><button className="store-signout" title={user?.email || 'Sign out'} onClick={() => void signOut().catch(signOutError => window.alert((signOutError as Error).message))}>Sign out</button></> : <a className="store-signout" href="/sign-in" onClick={event => { event.preventDefault(); onNavigate('/sign-in'); }}>Staff sign in</a>}</div></header>;
-}
-
-function StoreFooter({ onNavigate }: { onNavigate: (path: string) => void }) {
-  return <footer id="about" className="store-footer"><a href="/customers" className="footer-brand" onClick={event => { event.preventDefault(); onNavigate('/customers'); }}><Shell size={17} /> shellhouse</a><span>Natural forms, thoughtfully collected.</span><span>© Shellhouse Collection</span></footer>;
 }

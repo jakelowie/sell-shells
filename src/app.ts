@@ -15,6 +15,7 @@ import path from "node:path";
 import { corsMiddleware } from "./middleware/cors";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import authRouter from "./routes/auth";
+import shopRouter from "./routes/shop";
 import { authenticate, optionalAuthenticate, requireInventoryWriteRole, requireRole } from "./middleware/auth";
 
 const app = express();
@@ -35,6 +36,7 @@ app.get("/health", (_request, response) => {
   response.json({ status: "ok" });
 });
 app.use("/api/auth", authRouter);
+app.use("/api/shop", shopRouter);
 app.use("/api/shells", optionalAuthenticate, requireInventoryWriteRole, shellsRouter);
 app.use("/api/shell-localities", optionalAuthenticate, requireInventoryWriteRole, shellLocalitiesRouter);
 app.use("/api/shell-stock-types", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, shellStockTypesRouter);

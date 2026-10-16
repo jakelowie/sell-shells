@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 const WINDOW_MS = 1_000;
-const MAX_REQUESTS = 10;
+const MAX_REQUESTS = 1000;
 const MAX_CLIENTS = 10_000;
 
 type RateLimitEntry = { count: number; resetAt: number };

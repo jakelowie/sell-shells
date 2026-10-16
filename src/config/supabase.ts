@@ -4,6 +4,7 @@ import type { Database } from "../models/database";
 
 let client: SupabaseClient<Database> | undefined;
 let storageClient: SupabaseClient<Database> | undefined;
+let commerceClient: SupabaseClient<Database> | undefined;
 const requestClient = new AsyncLocalStorage<SupabaseClient<Database>>();
 
 /** Returns the server-side Supabase client using the project's publishable key. */
@@ -63,4 +64,20 @@ export function getSupabaseStorageClient(): SupabaseClient<Database> {
     auth: { autoRefreshToken: false, persistSession: false }
   });
   return storageClient;
+}
+
+/** Uses the server-only Supabase secret key for guest carts and orders. */
+export function getSupabaseCommerceClient(): SupabaseClient<Database> {
+  if (commerceClient) return commerceClient;
+
+  const url = process.env.SUPABASE_URL;
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !secretKey) {
+    throw new Error("Supabase commerce is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY in .env.");
+  }
+
+  commerceClient = createClient<Database>(url, secretKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+  return commerceClient;
 }

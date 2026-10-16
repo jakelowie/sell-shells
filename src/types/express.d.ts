@@ -6,6 +6,7 @@ declare global {
       uploadedImage?: UploadedImage;
       authUser?: { id: string; email: string | null };
       authRole?: import("../models/database").AppRole;
+      shopSessionId?: string;
     }
   }
 }

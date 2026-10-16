@@ -154,6 +154,9 @@ function databaseHandler(request, response) {
       if (value.startsWith("eq.") && key !== "select") {
         const expected = decodeURIComponent(value.slice(3));
         selected = selected.filter((row) => String(row[key]) === expected);
+      } else if (value.startsWith("in.(") && key !== "select") {
+        const expected = value.slice(4, -1).replaceAll('"', "").split(",");
+        selected = selected.filter((row) => expected.includes(String(row[key])));
       }
     }
 
@@ -298,6 +301,11 @@ before(async () => {
   process.env.SUPABASE_PUBLISHABLE_KEY = "test-publishable-key";
   process.env.SUPABASE_SECRET_KEY = "test-secret-key";
   process.env.SUPABASE_SIGNED_URL_TTL_SECONDS = "120";
+  process.env.PAYPAL_MODE = "sandbox";
+  process.env.PAYPAL_CLIENT_ID = "";
+  process.env.PAYPAL_CLIENT_SECRET = "";
+  process.env.PAYPAL_CURRENCY = "";
+  process.env.PAYPAL_DELIVERY_FEE = "0";
 
   const app = require("../dist/app.js").default;
   apiServer = http.createServer(app);
@@ -388,6 +396,16 @@ test("health and shell description CRUD use Supabase", async () => {
   assert.equal((await api(`/api/shells/${shellId}`)).status, 404);
 });
 
+test("guest commerce config is public while guest cart data requires a shop capability token", async () => {
+  const config = await api("/api/shop/config", { token: null });
+  assert.equal(config.status, 200);
+  assert.equal(config.body.data.checkout_enabled, false);
+  assert.equal(config.body.data.currency, null);
+  assert.equal(Object.hasOwn(config.body.data, "paypal_client_secret"), false);
+  assert.equal((await api("/api/shop/cart", { token: null })).status, 401);
+  assert.equal((await api("/api/shop/availability?ids=invalid", { token: null })).status, 400);
+});
+
 test("shell stock types support CRUD and preserve FK constraints", async () => {
   assert.equal((await api("/api/shell-stock-types?limit=10&stock_name=Bulk")).body.data.length, 1);
   assert.equal((await api(`/api/shell-stock-types/${stockTypeId}`)).status, 200);
@@ -462,6 +480,9 @@ test("shell images support CRUD and referenced shell integrity", async () => {
   const initialList = await api(`/api/shell-images?shell_id=${shellId}&limit=10`);
   assert.equal(initialList.body.data[0].file_name, "tiger-cowrie.jpg");
   assert.equal(initialList.body.data[0].image_url, null);
+  const batchList = await api(`/api/shell-images?shell_ids=${shellId}&limit=10`);
+  assert.equal(batchList.status, 200);
+  assert.equal(batchList.body.data[0].shell_id, shellId);
   assert.equal((await api(`/api/shell-images/${shellImageId}`)).status, 200);
   const form = new FormData();
   form.set("image", new Blob([Buffer.from([0xff, 0xd8, 0xff, 0xd9])], { type: "image/jpeg" }), "new-shell.jpg");

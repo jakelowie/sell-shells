@@ -51,3 +51,25 @@ export async function getAllImagesForShell(shellId: string) {
   );
   return [...firstPage.data, ...remainingPages.flatMap(page => page.data)];
 }
+
+
+export async function getShellImagesForShells(shellIds: string[]) {
+  if (!shellIds.length) return {};
+  const firstPage = await list<ShellImage>('/api/shell-images', {
+    shell_ids: shellIds.join(','), limit: PAGE_SIZE, offset: 0, sort_by: 'created_at', sort_order: 'desc',
+  });
+  const pageCount = Math.ceil(Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE);
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) => list<ShellImage>('/api/shell-images', {
+      shell_ids: shellIds.join(','), limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'created_at', sort_order: 'desc',
+    })),
+  );
+  const images = [...firstPage.data, ...remainingPages.flatMap(page => page.data)];
+  const bestImages: Record<string, ShellImage | undefined> = {};
+  images.forEach(image => {
+    if (!image.shell_id || !image.image_url) return;
+    const current = bestImages[image.shell_id];
+    if (!current || (image.is_main_image && !current.is_main_image)) bestImages[image.shell_id] = image;
+  });
+  return bestImages;
+}

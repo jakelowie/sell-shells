@@ -39,6 +39,7 @@ async function addSignedUrl(record: ShellImage): Promise<ShellImageWithUrl> {
 export async function listShellImages(query: ShellImageListQuery): Promise<PageResult<ShellImageWithUrl>> {
   let request = getSupabaseClient().from("shell_images").select("*", { count: "exact" });
   if (query.shell_id !== undefined) request = request.eq("shell_id", query.shell_id);
+  if (query.shell_ids !== undefined) request = request.in("shell_id", query.shell_ids);
   if (query.file_name !== undefined) request = request.eq("file_name", query.file_name);
   if (query.is_main_image !== undefined) request = request.eq("is_main_image", query.is_main_image);
   const { data, count, error } = await request

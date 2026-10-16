@@ -30,8 +30,9 @@ export const listShellImagesSchema = pageQuerySchema.extend({
   sort_by: z.enum(["created_at", "file_name", "is_main_image"]).default("created_at"),
   file_name: z.string().optional(),
   shell_id: uuidSchema.optional(),
+  shell_ids: z.string().max(3700).transform(value => value.split(",")).pipe(z.array(uuidSchema).min(1).max(100)).optional(),
   is_main_image: z.enum(["true", "false"]).optional().transform((value) => value === undefined ? undefined : value === "true")
-}).strict();
+}).strict().refine(value => !(value.shell_id && value.shell_ids), "Use shell_id or shell_ids, not both.");
 
 export type ShellImage = Required<z.infer<typeof createShellImageSchema>>;
 export type ShellImageInsert = z.infer<typeof createShellImageSchema>;

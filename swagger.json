@@ -3,7 +3,7 @@
   "info": {
     "title": "sell-shells API",
     "version": "1.0.0",
-    "description": "Public catalog GET requests for shells, shell types, and images allow anonymous browsing. Stock data and inventory writes require admin or superadmin authentication; role management requires superadmin."
+    "description": "Public catalog GET requests for shells, shell types, and images allow anonymous browsing. Stock data and inventory writes require admin or superadmin authentication; role management requires superadmin. Guest commerce uses a random X-Shop-Token capability for browser sessions; customers do not sign in. PayPal checkout is configured through server-only environment variables."
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "servers": [
@@ -42,6 +42,9 @@
     },
     {
       "name": "Shell localities"
+    },
+    {
+      "name": "Guest commerce"
     }
   ],
   "paths": {
@@ -3441,6 +3444,566 @@
           }
         ]
       }
+    },
+    "/api/shop/config": {
+      "get": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Read public checkout configuration",
+        "responses": {
+          "200": {
+            "description": "Checkout readiness, currency, delivery fee, public PayPal client ID and mode."
+          }
+        }
+      }
+    },
+    "/api/shop/sessions": {
+      "post": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Create a guest shopping session",
+        "responses": {
+          "201": {
+            "description": "New guest capability token. Store this token privately and send it as X-Shop-Token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopSession"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Commerce database is not configured."
+          }
+        }
+      }
+    },
+    "/api/shop/availability": {
+      "get": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Get current availability for up to 100 shells",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated shell UUIDs.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Map of shell UUID to currently available quantity."
+          },
+          "400": {
+            "description": "Invalid shell IDs."
+          }
+        }
+      }
+    },
+    "/api/shop/cart": {
+      "get": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Get this guest sessions cart",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current cart and stock availability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid shop session token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Request could not be completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/cart/items": {
+      "post": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Add quantity of a shell to the cart",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopCartItem"
+              },
+              "example": {
+                "shell_id": "11111111-1111-4111-8111-111111111111",
+                "quantity": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Updated guest cart."
+          },
+          "400": {
+            "description": "Invalid quantity or unavailable shell."
+          },
+          "401": {
+            "description": "Invalid shop session."
+          },
+          "409": {
+            "description": "Insufficient stock."
+          }
+        }
+      }
+    },
+    "/api/shop/cart/items/{shellId}": {
+      "parameters": [
+        {
+          "name": "shellId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "put": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Set the quantity of a cart item",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "quantity"
+                ],
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  }
+                }
+              },
+              "example": {
+                "quantity": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated guest cart.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid shop session token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Request could not be completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Remove a cart item",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated guest cart.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid shop session token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Request could not be completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/orders": {
+      "get": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "List orders owned by this guest session",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guest sessions order history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid shop session token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Request could not be completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Validate cart and create a PayPal order",
+        "description": "The server calculates prices and totals from Supabase, reserves available stock for 30 minutes and returns the PayPal order ID. Requires configured currency and server credentials.",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopCheckoutRequest"
+              },
+              "example": {
+                "idempotency_key": "22222222-2222-4222-8222-222222222222",
+                "customer": {
+                  "name": "Taylor Shell",
+                  "email": "taylor@example.com",
+                  "phone": "+1 555 555 0100"
+                },
+                "delivery_address": {
+                  "street_address": "12 Shore Road",
+                  "city": "Cebu City",
+                  "province": "Cebu",
+                  "postal_code": "6000",
+                  "country": "Philippines",
+                  "address_details": "Leave at reception"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Persisted order and PayPal order ID."
+          },
+          "400": {
+            "description": "Invalid checkout details."
+          },
+          "409": {
+            "description": "Cart stock changed or PayPal rejected the order."
+          },
+          "503": {
+            "description": "PayPal or currency configuration is missing."
+          }
+        }
+      }
+    },
+    "/api/shop/orders/{orderId}": {
+      "parameters": [
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Get owned order and invoice data",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted invoice data. Unpaid orders remain explicitly pending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid shop session token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Request could not be completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shop/orders/{orderId}/capture": {
+      "parameters": [
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Capture and verify a PayPal payment",
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order is marked paid only after server verification of amount, currency and local association."
+          },
+          "401": {
+            "description": "Invalid shop session."
+          },
+          "409": {
+            "description": "Payment has not completed or does not match this order."
+          }
+        }
+      }
+    },
+    "/api/shop/paypal/webhook": {
+      "post": {
+        "tags": [
+          "Guest commerce"
+        ],
+        "summary": "Receive verified PayPal events",
+        "description": "PayPal verifies the transmission signature server-side before event reconciliation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verified event accepted."
+          },
+          "400": {
+            "description": "Invalid or unverified event."
+          },
+          "503": {
+            "description": "Webhook ID or PayPal credentials are not configured."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4218,6 +4781,132 @@
           }
         ],
         "minProperties": 1
+      },
+      "ShopDeliveryAddress": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "street_address",
+          "city",
+          "province",
+          "postal_code",
+          "country"
+        ],
+        "properties": {
+          "street_address": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "city": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "province": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 20
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "address_details": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "ShopCheckoutRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "idempotency_key",
+          "customer",
+          "delivery_address"
+        ],
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "email",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 120
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "maxLength": 254
+              },
+              "phone": {
+                "type": "string",
+                "minLength": 7,
+                "maxLength": 30
+              }
+            }
+          },
+          "delivery_address": {
+            "$ref": "#/components/schemas/ShopDeliveryAddress"
+          }
+        }
+      },
+      "ShopCartItem": {
+        "type": "object",
+        "required": [
+          "shell_id",
+          "quantity"
+        ],
+        "properties": {
+          "shell_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      },
+      "ShopSession": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "session_id",
+              "token"
+            ],
+            "properties": {
+              "session_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "token": {
+                "type": "string",
+                "description": "Store as a secret in the customer browser; send using X-Shop-Token."
+              }
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -4226,6 +4915,12 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "description": "Supabase Auth access token."
+      },
+      "shopSession": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Shop-Token",
+        "description": "Guest session capability returned by POST /api/shop/sessions. Keep it private."
       }
     }
   }

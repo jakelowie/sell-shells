@@ -5,3 +5,18 @@ export type StockType = { stock_id: string; created_at: string; stock_name: stri
 export type ShellType = { type_id: string; created_at: string; shell_type_name: string | null };
 export type StockInfo = { stock_info_id: number; created_at: string; shell_id: string | null; shell_stock_id: string | null; shell_stock: number | null; shell_pcs_per_stock: number | null; shell_total_available: number | null };
 export type ShellImage = { image_id: string; created_at: string; file_name: string | null; storage_path: string | null; shell_id: string | null; is_main_image: boolean | null; image_url?: string | null; image_url_expires_at?: string | null };
+export type ShopConfig = { checkout_enabled: boolean; currency: string | null; delivery_fee: number; paypal_client_id: string | null; paypal_mode: 'sandbox' | 'live' };
+export type ShopCartItem = { shell_id: string; quantity: number; shell_name: string | null; price: number | null; is_deleted: boolean | null; available: number };
+export type ShopCart = { cart_id: string | null; items: ShopCartItem[] };
+export type DeliveryAddress = { street_address: string; city: string; province: string; postal_code: string; country: string; address_details: string };
+export type ShopOrderItem = { order_item_id: string; order_id: string; shell_id: string | null; shell_name: string; quantity: number; unit_price: number; line_total: number; created_at: string };
+export type ShopOrder = {
+  order_id: string; order_number: string; session_id: string; cart_id: string; idempotency_key: string;
+  order_status: 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';
+  payment_status: 'pending' | 'captured' | 'failed' | 'cancelled' | 'refunded';
+  customer_name: string; customer_email: string; customer_phone: string; delivery_address: DeliveryAddress;
+  currency: string; subtotal: number; delivery_fee: number; total: number; paypal_order_id: string | null;
+  paypal_capture_id: string | null; capture_request_id: string; payment_metadata: Record<string, unknown> | null;
+  expires_at: string; created_at: string; updated_at: string; items: ShopOrderItem[];
+};
+export type ShopOrderSummary = Pick<ShopOrder, 'order_id' | 'order_number' | 'order_status' | 'payment_status' | 'currency' | 'subtotal' | 'delivery_fee' | 'total' | 'created_at'>;

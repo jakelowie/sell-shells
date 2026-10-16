@@ -24,16 +24,28 @@ export function sendError(response: Response, error: unknown): void {
   if (error instanceof DatabaseOperationError) {
     let status = 500;
     let message = "The database could not complete the request.";
-    if (error.code === "P0002") {
+    if (error.code === "P0002" && error.databaseMessage === "The cart is empty.") {
+      status = 400;
+      message = "Add at least one available shell before checking out.";
+    } else if (error.code === "P0002" && error.databaseMessage === "Shell was not found.") {
+      status = 404;
+      message = "The requested shell was not found.";
+    } else if (error.code === "P0002") {
       status = 404;
       message = "The requested account role was not found.";
+    } else if (error.code === "28000") {
+      status = 401;
+      message = "The shop session is invalid. Start a new shopping session.";
     } else if (error.code === "23505") {
       status = 409;
       message = "A record with a conflicting unique value already exists.";
     } else if (error.code === "23503") {
       status = 409;
       message = "The record references a missing row or is still referenced by another row.";
-    } else if (["23502", "23514", "22P02", "22003", "22007"].includes(error.code)) {
+    } else if (error.code === "22003" && /stock/i.test(error.databaseMessage)) {
+      status = 409;
+      message = "Requested quantity exceeds the available stock.";
+    } else if (["23502", "23514", "22P02", "22003", "22007", "22023"].includes(error.code)) {
       status = 400;
       message = "The record violates a database constraint or contains an invalid value.";
     } else if (error.code === "42501") {
