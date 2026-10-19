@@ -198,10 +198,27 @@ export async function getOwnedOrder(sessionId: string, orderId: string) {
 
 export async function listOwnedOrders(sessionId: string, limit = 20, offset = 0) {
   const { data, count, error } = await getSupabaseCommerceClient().from("shop_orders")
-    .select("order_id, order_number, order_status, payment_status, currency, subtotal, delivery_fee, total, created_at", { count: "exact" })
+    .select("order_id, order_number, order_status, payment_status, currency, subtotal, delivery_fee, total, expires_at, created_at", { count: "exact" })
     .eq("session_id", sessionId).order("created_at", { ascending: false }).range(offset, offset + limit - 1);
   throwDatabaseError(error);
   return { data: data ?? [], pagination: { limit, offset, total: count ?? 0 } };
+}
+
+/** Staff-only order listing; the route must enforce an admin or superadmin role. */
+export async function listAdminOrders(limit = 50, offset = 0) {
+  const { data, count, error } = await getSupabaseCommerceClient().from("shop_orders")
+    .select("order_id, order_number, order_status, payment_status, customer_name, customer_email, customer_phone, currency, subtotal, delivery_fee, total, expires_at, created_at", { count: "exact" })
+    .order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+  throwDatabaseError(error);
+  return { data: data ?? [], pagination: { limit, offset, total: count ?? 0 } };
+}
+
+/** Staff-only order detail; the route must enforce an admin or superadmin role. */
+export async function getAdminOrder(orderId: string) {
+  const { data, error } = await getSupabaseCommerceClient().from("shop_orders").select("*").eq("order_id", orderId).maybeSingle();
+  throwDatabaseError(error);
+  if (!data) throw new ApiError(404, "Order not found.");
+  return { ...data, items: await getOrderItems(data.order_id) };
 }
 
 export async function processPayPalWebhook(headers: Record<string, string | undefined>, event: unknown): Promise<void> {

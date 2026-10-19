@@ -4,6 +4,7 @@ import CustomerApp from '../features/storefront/CustomerApp';
 import { useAuth } from '../features/auth/AuthProvider';
 import AuthPage from '../features/auth/AuthPage';
 import AdminUsersPage from '../features/auth/AdminUsersPage';
+import AdminOrdersPage from '../features/inventory/AdminOrdersPage';
 import { CircleAlert, LoaderCircle, Shell } from 'lucide-react';
 
 /** Keeps the app's lightweight URL routing in one place. */
@@ -34,6 +35,9 @@ export default function App() {
 
   if (route === '/admin/users') return role === 'superadmin'
     ? <AdminUsersPage onNavigate={onNavigate} />
+    : <Unauthorized role={role} onNavigate={onNavigate} />;
+  if (route === '/admin/orders') return role === 'admin' || role === 'superadmin'
+    ? <AdminOrdersPage onNavigate={onNavigate} />
     : <Unauthorized role={role} onNavigate={onNavigate} />;
   if (route === '/admin' || route.startsWith('/admin/')) {
     return role === 'admin' || role === 'superadmin'

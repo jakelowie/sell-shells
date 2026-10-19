@@ -23,6 +23,7 @@ export default function RecordModal({ section, dialog, shells, stocks, types, lo
   const field = (name: string) => item[name] ?? '';
   const [stockCount, setStockCount] = useState(String(field('shell_stock')));
   const [piecesPerStock, setPiecesPerStock] = useState(String(field('shell_pcs_per_stock')));
+  const [stockTypeId, setStockTypeId] = useState(String(field('shell_stock_id')));
 
   const input = (name: string, label: string, options: { type?: string; required?: boolean; placeholder?: string; value?: string; onChange?: React.ChangeEventHandler<HTMLInputElement>; step?: string } = {}) => (
     <label className="field">
@@ -40,7 +41,10 @@ export default function RecordModal({ section, dialog, shells, stocks, types, lo
     </label>
   );
   const recordName = section === 'shells' ? 'shell' : section === 'images' ? 'image' : section === 'stock-info' ? 'stock record' : section === 'stock-types' ? 'stock type' : section === 'shell-types' ? 'shell type' : 'locality';
-  const computedTotal = stockCount !== '' && piecesPerStock !== '' && Number.isFinite(Number(stockCount) * Number(piecesPerStock)) ? Number(stockCount) * Number(piecesPerStock) : '';
+  const isPerSet = stocks.find(stock => stock.stock_id === stockTypeId)?.stock_name?.trim().toLocaleLowerCase().includes('set');
+  const stock = Number(stockCount), pieces = Number(piecesPerStock);
+  const calculatedTotal = isPerSet ? stock / pieces : stock * pieces;
+  const computedTotal = stockCount !== '' && piecesPerStock !== '' && (!isPerSet || pieces !== 0) && Number.isFinite(calculatedTotal) ? calculatedTotal : '';
 
   return (
     <div
@@ -170,14 +174,13 @@ export default function RecordModal({ section, dialog, shells, stocks, types, lo
                 })),
               )}
 
-              {select(
-                'shell_stock_id',
-                'Unit',
-                stocks.map((stock) => ({
-                  id: stock.stock_id,
-                  label: stock.stock_name || stock.stock_id,
-                }))
-              )}
+              <label className="field">
+                <span>Unit</span>
+                <select name="shell_stock_id" value={stockTypeId} onChange={event => setStockTypeId(event.target.value)}>
+                  <option value="">Not specified</option>
+                  {stocks.map(stock => <option value={stock.stock_id} key={stock.stock_id}>{stock.stock_name || stock.stock_id}</option>)}
+                </select>
+              </label>
 
               <div className="field-grid">
                 {input('shell_stock', 'Number of stocks', {
@@ -187,7 +190,7 @@ export default function RecordModal({ section, dialog, shells, stocks, types, lo
                   onChange: (event) => setStockCount(event.target.value),
                 })}
 
-                {input('shell_pcs_per_stock', 'Pieces per stock', {
+                {input('shell_pcs_per_stock', 'Pieces per unit', {
                   type: 'number',
                   step: 'any',
                   value: piecesPerStock,
@@ -204,7 +207,7 @@ export default function RecordModal({ section, dialog, shells, stocks, types, lo
                     readOnly
                   />
                   <small className="field-hint">
-                    Calculated from stock count × pieces per stock
+                    {isPerSet ? 'Calculated from stock count ÷ pieces per stock' : 'Calculated from stock count × pieces per stock'}
                   </small>
                 </label>
               </div>

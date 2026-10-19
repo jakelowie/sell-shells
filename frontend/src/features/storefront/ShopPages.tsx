@@ -7,6 +7,7 @@ import {
   type DeliveryAddress, type ShopCart, type ShopConfig, type ShopOrder, type ShopOrderSummary
 } from '../../shared/api';
 import { StoreFooter, StoreHeader } from './StoreChrome';
+import OrderExpiryCountdown, { useOrderExpiry } from './OrderExpiryCountdown';
 
 type Navigate = (path: string) => void;
 type PaypalOrderData = { orderID: string };
@@ -189,6 +190,7 @@ export function ShopCheckoutPage({ onNavigate }: { onNavigate: Navigate }) {
   const formRef = useRef<HTMLFormElement>(null);
   const subtotal = cart?.items.reduce((sum, item) => sum + (item.price ?? 0) * item.quantity, 0) ?? 0;
   const total = subtotal + (config?.delivery_fee ?? 0);
+  const checkoutExpiry = useOrderExpiry(createdOrder?.expires_at ?? null);
 
   useEffect(() => {
     let active = true;
@@ -267,8 +269,9 @@ export function ShopCheckoutPage({ onNavigate }: { onNavigate: Navigate }) {
             <label className="shop-field">Address details or delivery instructions <span>(optional)</span><textarea rows={3} maxLength={500} value={values.address.address_details} onChange={event => setAddress('address_details', event.target.value)} /></label>
           </section>
           {orderError && <ShopError message={orderError} />}
+          {createdOrder?.payment_status === 'pending' && <div className="shop-pending-payment"><strong>Payment pending</strong><span>Complete payment before this reservation expires.</span><OrderExpiryCountdown expiresAt={createdOrder.expires_at} /></div>}
           {!config?.checkout_enabled && <p className="shop-configuration-note">PayPal checkout is unavailable until the store configures its currency and PayPal credentials.</p>}
-          {config && !unavailable && <PayPalButton config={config} createOrder={createPaypalOrder} onPaid={completePayment} onError={payPalError} onCancel={() => setOrderError('Payment was cancelled. The pending order remains available in order history until its 30-minute reservation expires.')} />}
+          {config && !unavailable && createdOrder?.payment_status === 'pending' && checkoutExpiry.expired ? <ShopError message="This payment reservation has expired. Return to your bag to start a new checkout." /> : config && !unavailable && <PayPalButton config={config} createOrder={createPaypalOrder} onPaid={completePayment} onError={payPalError} onCancel={() => setOrderError('Payment was cancelled. The pending order remains available in order history until its reservation expires.')} />}
           {busy && <p className="shop-payment-progress"><LoaderCircle size={15} className="spin" /> Contacting PayPal securely…</p>}
           {unavailable && <ShopError message="One or more cart items are unavailable or exceed the current stock. Return to your bag to adjust quantities." />}
         </form>
@@ -297,7 +300,7 @@ export function ShopOrdersPage({ onNavigate }: { onNavigate: Navigate }) {
       {loading ? <ShopLoading label="Loading your orders…" /> : error ? <ShopError message={error} /> : !orders.length ? <section className="shop-empty"><span><ShoppingBag size={22} /></span><h2>No orders yet</h2><p>Your completed and pending orders will appear here.</p><button className="shop-primary-button" onClick={() => onNavigate('/customers')}>Browse the collection</button></section> : (
         <section className="shop-orders-list">{orders.map(order => <button className="shop-order-row" key={order.order_id} onClick={() => onNavigate(`/orders/${encodeURIComponent(order.order_id)}`)}>
           <span><strong>{order.order_number}</strong><small>{new Date(order.created_at).toLocaleString()}</small></span>
-          <span className={`shop-status ${order.payment_status}`}>{order.payment_status}</span>
+          <span className="shop-order-status"><span className={`shop-status ${order.payment_status}`}>{order.payment_status}</span>{order.payment_status === 'pending' && <OrderExpiryCountdown expiresAt={order.expires_at} />}</span>
           <strong>{money(order.total, order.currency)}</strong><ArrowRight size={16} />
         </button>)}</section>
       )}
@@ -311,6 +314,7 @@ export function ShopOrderPage({ orderId, onNavigate }: { orderId: string; onNavi
   const [error, setError] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [config, setConfig] = useState<ShopConfig | null>(null);
+  const orderExpiry = useOrderExpiry(order?.expires_at ?? null);
   const refresh = useCallback(async () => {
     setError('');
     try { setOrder(await getShopOrder(orderId)); }
@@ -338,8 +342,10 @@ export function ShopOrderPage({ orderId, onNavigate }: { orderId: string; onNavi
       {loading ? <ShopLoading label="Retrieving your order…" /> : error ? <ShopError message={error} /> : order && <>
         <header className="shop-page-heading"><span className="store-kicker">ORDER CONFIRMATION</span><h1>{order.payment_status === 'captured' ? 'Thank you for your order' : 'Order details'}</h1><p>Your order reference is {order.order_number}.</p></header>
         {paymentError && <ShopError message={paymentError} />}
-        {order.payment_status === 'pending' && <section className="shop-pending-payment"><strong>Payment pending</strong><span>This order has not been paid. Complete the PayPal payment below or return to the order later.</span>
-          {config && <PayPalButton config={config} createOrder={retryOrderPayment} onPaid={completePayment} onError={paypalError} onCancel={() => setPaymentError('Payment was cancelled. This order remains unpaid until completed or its reservation expires.')} />}
+        {order.payment_status === 'pending' && <section className="shop-pending-payment"><strong>Payment pending</strong><span>This order has not been paid. Complete payment before the reservation expires.</span>
+          <OrderExpiryCountdown expiresAt={order.expires_at} />
+          {!orderExpiry.expired && config && <PayPalButton config={config} createOrder={retryOrderPayment} onPaid={completePayment} onError={paypalError} onCancel={() => setPaymentError('Payment was cancelled. This order remains unpaid until completed or its reservation expires.')} />}
+          {orderExpiry.expired && <span className="order-expiry expired">This reservation has expired. Start a new checkout from your bag.</span>}
         </section>}
         <article className="shop-invoice" id="shop-invoice">
           <div className="shop-invoice-top"><div className="shop-invoice-brand"><Shell size={19} /> shellhouse<small>THE SHELL COLLECTION</small></div><div><span className={`shop-status ${order.payment_status}`}>{order.payment_status}</span><h2>Invoice</h2></div></div>

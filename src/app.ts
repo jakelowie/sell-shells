@@ -16,6 +16,7 @@ import { corsMiddleware } from "./middleware/cors";
 import { rateLimitMiddleware } from "./middleware/rate-limit";
 import authRouter from "./routes/auth";
 import shopRouter from "./routes/shop";
+import adminOrdersRouter from "./routes/admin-orders";
 import { authenticate, optionalAuthenticate, requireInventoryWriteRole, requireRole } from "./middleware/auth";
 
 const app = express();
@@ -37,6 +38,7 @@ app.get("/health", (_request, response) => {
 });
 app.use("/api/auth", authRouter);
 app.use("/api/shop", shopRouter);
+app.use("/api/admin/orders", authenticate, requireRole("admin", "superadmin"), adminOrdersRouter);
 app.use("/api/shells", optionalAuthenticate, requireInventoryWriteRole, shellsRouter);
 app.use("/api/shell-localities", optionalAuthenticate, requireInventoryWriteRole, shellLocalitiesRouter);
 app.use("/api/shell-stock-types", authenticate, requireRole("admin", "superadmin"), requireInventoryWriteRole, shellStockTypesRouter);

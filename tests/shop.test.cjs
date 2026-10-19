@@ -4,6 +4,7 @@ const { test } = require("node:test");
 const { cartItemSchema, createOrderSchema } = require("../dist/validation/shop.js");
 const { listShellImagesSchema } = require("../dist/validation/shell-image.js");
 const { formatPayPalAmount } = require("../dist/services/paypal.service.js");
+const { calculateTotalAvailable } = require("../dist/services/stock-info.service.js");
 
 const validCheckout = {
   idempotency_key: "11111111-1111-4111-8111-111111111111",
@@ -31,6 +32,13 @@ test("shop cart quantity validation enforces UUID and bounded integer quantities
   assert.equal(cartItemSchema.safeParse({ shell_id: "not-a-uuid", quantity: 1 }).success, false);
   assert.equal(cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 0 }).success, false);
   assert.equal(cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 1.5 }).success, false);
+});
+
+test("stock totals divide for per-set stock types and multiply for other stock types", () => {
+  assert.equal(calculateTotalAvailable(24, 6, true), 4);
+  assert.equal(calculateTotalAvailable(3, 12, false), 36);
+  assert.equal(calculateTotalAvailable(null, 12, true), null);
+  assert.throws(() => calculateTotalAvailable(24, 0, true), /greater than zero/i);
 });
 
 test("PayPal amounts use the configured currency precision without silent rounding", () => {

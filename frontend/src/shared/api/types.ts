@@ -19,4 +19,4 @@ export type ShopOrder = {
   paypal_capture_id: string | null; capture_request_id: string; payment_metadata: Record<string, unknown> | null;
   expires_at: string; created_at: string; updated_at: string; items: ShopOrderItem[];
 };
-export type ShopOrderSummary = Pick<ShopOrder, 'order_id' | 'order_number' | 'order_status' | 'payment_status' | 'currency' | 'subtotal' | 'delivery_fee' | 'total' | 'created_at'>;
+export type ShopOrderSummary = Pick<ShopOrder, 'order_id' | 'order_number' | 'order_status' | 'payment_status' | 'currency' | 'subtotal' | 'delivery_fee' | 'total' | 'expires_at' | 'created_at'>;

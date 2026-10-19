@@ -6,7 +6,7 @@ The storefront now supports public shell browsing, a persistent guest cart, deli
 
 The backend is the authority for product price, quantity, availability, order totals and payment state. Guest requests use a random 32-byte capability token. Only its SHA-256 hash is stored in Supabase. Cart and order rows are private and all commerce writes use the server-only `SUPABASE_SECRET_KEY` client. Database functions serialize cart edits and checkout stock checks by locking guest sessions and shell rows.
 
-The existing inventory table remains the stock source. Available stock is the sum of `shell_stock * shell_pcs_per_stock` for a shell (falling back to `shell_total_available` when either source value is null), minus quantities in paid orders and unexpired pending orders. A checkout reservation lasts 30 minutes. No quantity is invented when the inventory rows are missing; availability is zero.
+The existing inventory table remains the stock source. For a stock type named `per set` (case-insensitive), available stock is `shell_stock / shell_pcs_per_stock`; other stock types use `shell_stock * shell_pcs_per_stock`. If either source value is null, the stored `shell_total_available` is used. Paid and unexpired pending order quantities are subtracted. A checkout reservation lasts 30 minutes. No quantity is invented when the inventory rows are missing; availability is zero.
 
 Currency, delivery fees, tax, shipping rules and store business details are not present in the supplied schema. The implementation requires a configured PayPal currency before checkout. The delivery fee is configurable and defaults to zero; no tax is calculated. Addresses are snapshots on orders; there is no customer profile or address book.
 
@@ -15,6 +15,8 @@ Currency, delivery fees, tax, shipping rules and store business details are not 
 - `frontend/src/features/storefront/CustomerApp.tsx` routes customer paths to the storefront, cart, checkout, order list and order invoice. It displays live availability, configured currency and an add-to-bag action on shell details.
 - `frontend/src/features/storefront/StoreChrome.tsx` shares collection navigation and displays the guest bag count. Anonymous shoppers do not see staff-management navigation; signed-in staff continue to see their existing controls.
 - `frontend/src/features/storefront/ShopPages.tsx` implements cart management, customer and delivery forms, PayPal JS SDK buttons, order history, payment-pending states and printer-friendly invoices.
+- `frontend/src/features/storefront/OrderExpiryCountdown.tsx` displays a live countdown using the order's stored expiry time on checkout, order history and order details.
+- `frontend/src/features/inventory/AdminOrdersPage.tsx` gives admins and superadmins an order list, customer/delivery details and pending reservation countdowns.
 - `frontend/src/shared/api/shop.ts` creates and stores the guest capability token in browser local storage, sends it in `X-Shop-Token`, and wraps the commerce API.
 - `frontend/src/shared/api/types.ts` defines the commerce request and response types; `frontend/src/shared/api/index.ts` exports the client methods.
 - `frontend/src/shared/styles.css` adds responsive commerce styles and a print layout that prints the invoice without navigation or actions.
@@ -30,12 +32,12 @@ The bag and order history are tied to the current browser's capability token. Th
 - `src/services/paypal.service.ts` implements PayPal OAuth, order creation/capture, currency precision checks and webhook-signature verification using the built-in `fetch` API; no additional package was added.
 - `src/validation/shop.ts` validates UUIDs, quantities, contact details and delivery addresses.
 - `src/models/database.ts` adds typed commerce tables and RPC functions. `src/config/supabase.ts` adds a cached, server-only commerce client. `src/types/express.d.ts` adds the resolved guest session ID.
-- `src/app.ts` mounts `/api/shop`; `src/controllers/shared.ts` maps commerce database errors to safe HTTP responses.
+- `src/app.ts` mounts `/api/shop` and protects `/api/admin/orders` with Supabase authentication and the admin/superadmin role check; `src/controllers/shared.ts` maps commerce database errors to safe HTTP responses.
 - `swagger.json` documents the new routes and `sell-shells.insomnia.json` includes importable sample requests.
 
 ## 4. Database Changes
 
-Migration: `supabase/migrations/20261017010000_customer_shop.sql`.
+Migrations: run `supabase/migrations/20261017010000_customer_shop.sql` first, then `supabase/migrations/20261018010000_per_set_stock_and_admin_orders.sql`.
 
 The migration adds:
 
@@ -44,6 +46,7 @@ The migration adds:
 - `shop_cart_items`: shell FK, quantity check (1–100), and cart/shell primary key.
 - `shop_orders`: unique human-readable order number, session/cart references, checkout idempotency key, status fields, customer contact snapshot, delivery-address JSON snapshot, currency, subtotal, delivery fee, total, PayPal references, payment metadata, expiry and timestamps.
 - `shop_order_items`: order FK and historical shell name, quantity, unit price and line total snapshots; shell deletion does not erase invoice data.
+- The follow-up migration updates the stock availability function to divide inventory for stock types named `per set`, matching the backend stock-info calculation.
 - `shop_order_number_seq` and indexes for active carts, order history, reservations and order items.
 - `shop_available_quantities`, `shop_cart_snapshot`, `shop_add_cart_item`, `shop_set_cart_item` and `shop_create_order` RPC functions. The checkout function locks shell rows in stable order, rechecks live prices and stock, snapshots line items and converts the cart in one transaction.
 
@@ -52,6 +55,18 @@ RLS is enabled on all commerce tables. `anon` and `authenticated` have no table 
 ## 5. API Reference
 
 The API base is `http://localhost:3000` by default. Customer endpoints do not require Supabase Auth. The customer-specific routes require `X-Shop-Token: <token>` from `POST /api/shop/sessions`. Do not share this capability token.
+
+Admin order endpoints require `Authorization: Bearer <supabase-access-token>` for an authenticated `admin` or `superadmin` user.
+
+### Staff endpoints
+
+#### `GET /api/admin/orders`
+
+Lists orders for staff, with customer contact details and pagination. Accepts `limit` (1–100) and `offset` query parameters.
+
+#### `GET /api/admin/orders/{orderId}`
+
+Returns an order with its delivery address and line items. Both staff endpoints are also documented in Swagger JSON.
 
 ### Public endpoints
 
@@ -225,7 +240,7 @@ Checks run during implementation:
 
 - `npm run build` — passed.
 - `npm run build:frontend` — passed after resolving TypeScript errors.
-- `npm test` — build passed; the test HTTP server could not be reached in the restricted local environment (`fetch failed` for the existing localhost-based API integration suite). The loopback-dependent test run remains to be repeated in an environment that permits local socket binding.
+- `npm test` — passed all 16 tests, including the localhost-based API integration suite with loopback access.
 - Migration application and PayPal sandbox capture/webhook were not run because database access and PayPal credentials are not configured as part of this task.
 
 No lint command is configured in the project.
@@ -236,6 +251,11 @@ No lint command is configured in the project.
 
 - `ECOMMERCE_IMPLEMENTATION.md` — this implementation and setup record.
 - `supabase/migrations/20261017010000_customer_shop.sql` — guest commerce tables, RLS/grants, stock and checkout RPCs.
+- `supabase/migrations/20261018010000_per_set_stock_and_admin_orders.sql` — updates storefront stock availability for `per set` stock types.
+- `src/controllers/admin-orders.controller.ts` and `src/routes/admin-orders.ts` — staff order list and detail endpoints.
+- `frontend/src/features/inventory/AdminOrdersPage.tsx` — admin order management view.
+- `frontend/src/features/storefront/OrderExpiryCountdown.tsx` — shared live order-expiry countdown.
+- `frontend/src/shared/api/admin-orders.ts` — staff order API client.
 - `src/controllers/shop.controller.ts` — commerce HTTP handlers.
 - `src/middleware/shop-session.ts` — guest capability-token validation and session resolution.
 - `src/routes/shop.ts` — commerce route definitions.
@@ -243,6 +263,9 @@ No lint command is configured in the project.
 - `src/services/shop.service.ts` — cart, order, ownership and payment orchestration.
 - `src/validation/shop.ts` — commerce validation schemas.
 - `frontend/src/features/storefront/ShopPages.tsx` — cart, checkout, orders, PayPal buttons and invoice UI.
+- `frontend/src/features/inventory/InventoryPage.tsx` — staff navigation to customer orders.
+- `frontend/src/features/inventory/components/RecordModal.tsx` — preview stock totals with per-set division.
+- `frontend/src/app/App.tsx` — protected admin orders route.
 - `frontend/src/features/storefront/StoreChrome.tsx` — shared storefront header/footer with bag count.
 - `frontend/src/shared/api/shop.ts` — guest session and commerce API client.
 - `tests/shop.test.cjs` — checkout validation and PayPal money-format tests.
@@ -255,12 +278,12 @@ No lint command is configured in the project.
 - `frontend/src/shared/api/index.ts` — exports commerce API and types.
 - `frontend/src/shared/api/types.ts` — storefront commerce types.
 - `frontend/src/shared/styles.css` — storefront commerce, responsive and print styles.
-- `src/app.ts` — mount `/api/shop`.
+- `src/app.ts` — mount `/api/shop` and role-protected `/api/admin/orders`.
 - `src/config/supabase.ts` — server-only commerce Supabase client.
 - `src/controllers/shared.ts` — safe commerce database error mapping.
 - `src/models/database.ts` — typed commerce tables and RPC definitions.
 - `src/types/express.d.ts` — guest session request property.
-- `swagger.json` — OpenAPI JSON documentation for the commerce API.
+- `swagger.json` — OpenAPI JSON documentation for customer commerce and staff order APIs.
 - `sell-shells.insomnia.json` — importable commerce requests and environment values.
 - `tests/shells.test.cjs` — commerce configuration and guest access checks.
 
@@ -268,7 +291,7 @@ No existing files were deleted or moved. Build output is generated under ignored
 
 ## 12. Setup and Deployment
 
-1. Apply `supabase/migrations/20261017010000_customer_shop.sql` to the same Supabase project as the existing shell schema. Use Supabase CLI after linking the project (`supabase db push`) or run the SQL file in the Supabase SQL editor. Review the SQL and ensure the project has the `anon`, `authenticated` and `service_role` roles before applying.
+1. Apply `supabase/migrations/20261017010000_customer_shop.sql`, then `supabase/migrations/20261018010000_per_set_stock_and_admin_orders.sql` to the same Supabase project as the existing shell schema. Use Supabase CLI after linking the project (`supabase db push`) or run both SQL files in filename order in the Supabase SQL editor. Review the SQL and ensure the project has the `anon`, `authenticated` and `service_role` roles before applying.
 2. Copy `.env.example` to `.env`. Fill existing Supabase URL/publishable/secret values and PayPal sandbox credentials. Choose the actual business currency and delivery fee; checkout remains disabled without `PAYPAL_CURRENCY` and valid PayPal credentials.
 3. Start the API with `npm run dev` and the frontend with `npm --prefix frontend run dev` in separate terminals. The Vite dev server proxies `/api` to port 3000.
 4. Use the storefront at the Vite URL. Customers can browse without an account. Configure PayPal sandbox buyer credentials to finish a payment.
