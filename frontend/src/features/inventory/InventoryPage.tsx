@@ -63,12 +63,382 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
     }
   };
   const groups = useMemo(() => Array.from(new Set(nav.map(x => x.group))), []);
-  return <div className="app-shell"><aside className={`sidebar ${mobileNav ? 'open' : ''}`}><div className="brand"><div className="brand-mark"><ShellIcon size={21} /></div><span>shellhouse</span><button className="mobile-close" onClick={() => setMobileNav(false)}><X size={18} /></button></div><div className="workspace"><div className="workspace-icon">C</div><div><strong>Coastal collection</strong><small>PERSONAL ARCHIVE</small></div><ChevronRight size={15} /></div><div className="nav-list">{groups.map(group => <div className="nav-group" key={group}><div className="nav-heading">{group}</div>{nav.filter(n => n.group === group && n.id !== 'customers').map(item => <button className={`nav-item ${section === item.id ? 'active' : ''}`} key={item.id} onClick={() => openSection(item.id as Section)}><item.icon size={17} /><span>{item.label}</span>{item.id === 'shells' && <span className="nav-count">{shells.length}</span>}</button>)}{group === 'COLLECTION' && <><button className="nav-item" onClick={() => { onNavigate('/customers'); setMobileNav(false); }}><UsersRound size={17}/><span>Customers</span></button><button className="nav-item" onClick={() => { onNavigate('/admin/orders'); setMobileNav(false); }}><ShoppingBag size={17}/><span>Orders</span></button></>}{group === 'CATALOGS' && role === 'superadmin' && <button className="nav-item" onClick={() => onNavigate('/admin/users')}><UserRoundCog size={17}/><span>Role management</span></button>}</div>)}</div><div className="sidebar-bottom"><div className="api-status"><span className="status-dot" /><span>API connection</span><b>LOCAL</b></div><div className="profile"><div className="avatar">{(user?.email?.[0] || 'S').toUpperCase()}</div><div><strong>{user?.email || 'Account'}</strong><small>{role || 'Role unavailable'}</small></div><span className="more">···</span></div></div></aside>{mobileNav && <div className="scrim" onClick={() => setMobileNav(false)} />}
-    <main className="main"><header className="topbar"><button className="mobile-menu" onClick={() => setMobileNav(true)}><Menu size={20} /></button><div className="crumb">Workspace <ChevronRight size={13} /> <span>{meta.title}</span></div><div className="top-actions"><span className="today">{user?.email} · {role}</span><button className="auth-signout" onClick={() => void signOut().catch(signOutError => setError((signOutError as Error).message))} aria-label="Sign out"><LogOut size={15} /> Sign out</button></div></header><div className="content"><div className="page-heading"><div><div className="eyebrow">COLLECTION / {section.replace('-', ' ').toUpperCase()}</div><h1>{meta.title}</h1><p>{meta.sub}</p></div><button className="primary" onClick={() => setDialog({ mode: 'create' })}><Plus size={17} /> {section === 'images' ? 'Upload image' : section === 'shells' ? 'Add a shell' : 'Add record'}</button></div>
-      <div className="summary-row"><div className="summary-card"><div className="summary-icon lavender"><ShellIcon size={18} /></div><div><small>IN THIS VIEW</small><strong>{total.toLocaleString()} <span>records</span></strong></div></div><div className="summary-note"><span className="note-star">✳</span><span>“The sea, once it casts its spell, holds one in its net of wonder forever.”</span><i>— Jacques Cousteau</i></div></div>
-      <section className="table-panel"><div className="toolbar"><div className="searchbox"><Search size={16} /><input placeholder={section === 'shells' ? 'Search by shell name...' : section === 'images' ? 'Search image file name...' : 'Search records...'} value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} /><kbd>⌘ K</kbd></div>{section === 'shells' && <label className="deleted-toggle"><input type="checkbox" checked={includeDeleted} onChange={e => { setIncludeDeleted(e.target.checked); setPage(0); }} /><span>Include deleted</span></label>}<button className="filter-btn" onClick={() => { setSearch(''); setPage(0); }}><Archive size={15} /> Reset</button></div>
-        {error && <div className="error-banner"><CircleAlert size={17} /><span>{error}</span><button onClick={() => void load()}>Retry</button></div>}
-        {loading ? <div className="loading"><LoaderCircle className="spin" size={23} /> Loading collection…</div> : data.length === 0 ? <div className="empty"><div className="empty-icon"><ShellIcon size={24} /></div><strong>{search ? 'No matching records' : 'Nothing here yet'}</strong><span>{search ? 'Try another search or clear the filter.' : 'Add your first record to start building this collection.'}</span>{!search && <button className="text-action" onClick={() => setDialog({ mode: 'create' })}>Create a record <ChevronRight size={15} /></button>}</div> : <InventoryTable section={section} data={data} shells={shells} stocks={stocks} types={types} localities={localities} onEdit={beginEdit} onDelete={remove} />}
-        <div className="pagination"><span>Showing <b>{total === 0 ? 0 : page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)}</b> of <b>{total}</b> records</span><div><button aria-label="Previous page" disabled={page === 0 || loading} onClick={() => setPage(p => p - 1)}><ChevronLeft size={17} /></button><span className="page-index">{page + 1} <i>/</i> {Math.max(1, Math.ceil(total / PAGE_SIZE))}</span><button aria-label="Next page" disabled={(page + 1) * PAGE_SIZE >= total || loading} onClick={() => setPage(p => p + 1)}><ChevronRight size={17} /></button></div></div></section><footer><span>Made for the love of little things.</span><span>Shellhouse <i>·</i> Inventory Studio</span></footer></div></main>
-    {dialog !== null && <RecordModal key={`${section}-${(dialog as {mode?:string;item?:Record<string,unknown>}).mode}-${(dialog as {item?:Record<string,unknown>}).item?.stock_info_id ?? 'new'}`} section={section} dialog={dialog as { mode: 'create' | 'edit'; item?: Record<string, unknown> }} shells={shells} stocks={stocks} types={types} localities={localities} saving={saving} error={error} onClose={() => setDialog(null)} onSubmit={async e => { e.preventDefault(); setError(''); try { await save(e.currentTarget); } catch (err) { setError((err as Error).message); setSaving(false); } }} />}{toast && <div className="toast">✓ &nbsp;{toast}</div>}</div>
+  return (
+    <div className="app-shell">
+      <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
+        <div className="brand">
+          <div className="brand-mark">
+            <ShellIcon size={21} />
+          </div>
+          <span>shellhouse</span>
+          <button
+            className="mobile-close"
+            onClick={() => setMobileNav(false)}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="workspace">
+          <div className="workspace-icon">C</div>
+          <div>
+            <strong>Coastal collection</strong>
+            <small>PERSONAL ARCHIVE</small>
+          </div>
+          <ChevronRight size={15} />
+        </div>
+
+        <div className="nav-list">
+          {groups.map(group => (
+            <div className="nav-group" key={group}>
+              <div className="nav-heading">{group}</div>
+
+              {nav
+                .filter(n => n.group === group && n.id !== 'customers')
+                .map(item => (
+                  <button
+                    className={`nav-item ${section === item.id ? 'active' : ''
+                      }`}
+                    key={item.id}
+                    onClick={() => openSection(item.id as Section)}
+                  >
+                    <item.icon size={17} />
+                    <span>{item.label}</span>
+
+                    {item.id === 'shells' && (
+                      <span className="nav-count">{shells.length}</span>
+                    )}
+                  </button>
+                ))}
+
+              {group === 'COLLECTION' && (
+                <>
+                  <button
+                    className="nav-item"
+                    onClick={() => {
+                      onNavigate('/customers');
+                      setMobileNav(false);
+                    }}
+                  >
+                    <UsersRound size={17} />
+                    <span>Customers</span>
+                  </button>
+
+                  <button
+                    className="nav-item"
+                    onClick={() => {
+                      onNavigate('/admin/orders');
+                      setMobileNav(false);
+                    }}
+                  >
+                    <ShoppingBag size={17} />
+                    <span>Orders</span>
+                  </button>
+                </>
+              )}
+
+              {group === 'CATALOGS' && role === 'superadmin' && (
+                <button
+                  className="nav-item"
+                  onClick={() => onNavigate('/admin/users')}
+                >
+                  <UserRoundCog size={17} />
+                  <span>Role management</span>
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="api-status">
+            <span className="status-dot" />
+            <span>API connection</span>
+            <b>LOCAL</b>
+          </div>
+
+          <div className="profile">
+            <div className="avatar">
+              {(user?.email?.[0] || 'S').toUpperCase()}
+            </div>
+            <div>
+              <strong>{user?.email || 'Account'}</strong>
+              <small>{role || 'Role unavailable'}</small>
+            </div>
+            <span className="more">···</span>
+          </div>
+        </div>
+      </aside>
+
+      {mobileNav && (
+        <div
+          className="scrim"
+          onClick={() => setMobileNav(false)}
+        />
+      )}
+
+      <main className="main">
+        <header className="topbar">
+          <button
+            className="mobile-menu"
+            onClick={() => setMobileNav(true)}
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="crumb">
+            Workspace
+            <ChevronRight size={13} />
+            <span>{meta.title}</span>
+          </div>
+
+          <div className="top-actions">
+            <span className="today">
+              {user?.email} · {role}
+            </span>
+
+            <button
+              className="auth-signout"
+              onClick={() =>
+                void signOut().catch(signOutError =>
+                  setError((signOutError as Error).message)
+                )
+              }
+              aria-label="Sign out"
+            >
+              <LogOut size={15} />
+              Sign out
+            </button>
+          </div>
+        </header>
+
+        <div className="content">
+          <div className="page-heading">
+            <div>
+              <div className="eyebrow">
+                COLLECTION / {section.replace('-', ' ').toUpperCase()}
+              </div>
+              <h1>{meta.title}</h1>
+              <p>{meta.sub}</p>
+            </div>
+
+            <button
+              className="primary"
+              onClick={() => setDialog({ mode: 'create' })}
+            >
+              <Plus size={17} />
+              {section === 'images'
+                ? 'Upload image'
+                : section === 'shells'
+                  ? 'Add a shell'
+                  : 'Add record'}
+            </button>
+          </div>
+
+          <div className="summary-row">
+            <div className="summary-card">
+              <div className="summary-icon lavender">
+                <ShellIcon size={18} />
+              </div>
+
+              <div>
+                <small>IN THIS VIEW</small>
+                <strong>
+                  {total.toLocaleString()} <span>records</span>
+                </strong>
+              </div>
+            </div>
+
+            <div className="summary-note">
+              <span className="note-star">✳</span>
+              <span>
+                “The sea, once it casts its spell, holds one in its net of
+                wonder forever.”
+              </span>
+              <i>— Jacques Cousteau</i>
+            </div>
+          </div>
+
+          <section className="table-panel">
+            <div className="toolbar">
+              <div className="searchbox">
+                <Search size={16} />
+
+                <input
+                  placeholder={
+                    section === 'shells'
+                      ? 'Search by shell name...'
+                      : section === 'images'
+                        ? 'Search image file name...'
+                        : 'Search records...'
+                  }
+                  value={search}
+                  onChange={e => {
+                    setSearch(e.target.value);
+                    setPage(0);
+                  }}
+                />
+
+                <kbd>⌘ K</kbd>
+              </div>
+
+              {section === 'shells' && (
+                <label className="deleted-toggle">
+                  <input
+                    type="checkbox"
+                    checked={includeDeleted}
+                    onChange={e => {
+                      setIncludeDeleted(e.target.checked);
+                      setPage(0);
+                    }}
+                  />
+                  <span>Include deleted</span>
+                </label>
+              )}
+
+              <button
+                className="filter-btn"
+                onClick={() => {
+                  setSearch('');
+                  setPage(0);
+                }}
+              >
+                <Archive size={15} />
+                Reset
+              </button>
+            </div>
+
+            {error && (
+              <div className="error-banner">
+                <CircleAlert size={17} />
+                <span>{error}</span>
+                <button onClick={() => void load()}>Retry</button>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="loading">
+                <LoaderCircle className="spin" size={23} />
+                Loading collection…
+              </div>
+            ) : data.length === 0 ? (
+              <div className="empty">
+                <div className="empty-icon">
+                  <ShellIcon size={24} />
+                </div>
+
+                <strong>
+                  {search ? 'No matching records' : 'Nothing here yet'}
+                </strong>
+
+                <span>
+                  {search
+                    ? 'Try another search or clear the filter.'
+                    : 'Add your first record to start building this collection.'}
+                </span>
+
+                {!search && (
+                  <button
+                    className="text-action"
+                    onClick={() => setDialog({ mode: 'create' })}
+                  >
+                    Create a record
+                    <ChevronRight size={15} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <InventoryTable
+                section={section}
+                data={data}
+                shells={shells}
+                stocks={stocks}
+                types={types}
+                localities={localities}
+                onEdit={beginEdit}
+                onDelete={remove}
+              />
+            )}
+
+            <div className="pagination">
+              <span>
+                Showing{' '}
+                <b>
+                  {total === 0 ? 0 : page * PAGE_SIZE + 1}–
+                  {Math.min((page + 1) * PAGE_SIZE, total)}
+                </b>{' '}
+                of <b>{total}</b> records
+              </span>
+
+              <div>
+                <button
+                  aria-label="Previous page"
+                  disabled={page === 0 || loading}
+                  onClick={() => setPage(p => p - 1)}
+                >
+                  <ChevronLeft size={17} />
+                </button>
+
+                <span className="page-index">
+                  {page + 1} <i>/</i>{' '}
+                  {Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                </span>
+
+                <button
+                  aria-label="Next page"
+                  disabled={(page + 1) * PAGE_SIZE >= total || loading}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <footer>
+            <span>Made for the love of little things.</span>
+            <span>
+              Shellhouse <i>·</i> Inventory Studio
+            </span>
+          </footer>
+        </div>
+      </main>
+
+      {dialog !== null && (
+        <RecordModal
+          key={`${section}-${(dialog as { mode?: string; item?: Record<string, unknown> }).mode
+            }-${(dialog as { item?: Record<string, unknown> }).item?.stock_info_id ??
+            'new'
+            }`}
+          section={section}
+          dialog={
+            dialog as {
+              mode: 'create' | 'edit';
+              item?: Record<string, unknown>;
+            }
+          }
+          shells={shells}
+          stocks={stocks}
+          types={types}
+          localities={localities}
+          saving={saving}
+          error={error}
+          onClose={() => setDialog(null)}
+          onSubmit={async e => {
+            e.preventDefault();
+            setError('');
+
+            try {
+              await save(e.currentTarget);
+            } catch (err) {
+              setError((err as Error).message);
+              setSaving(false);
+            }
+          }}
+        />
+      )}
+
+      {toast && <div className="toast">✓ &nbsp;{toast}</div>}
+    </div>
+  );
 }
