@@ -56,22 +56,30 @@ function PayPalButton({ config, createOrder, onPaid, onCancel, onError }: {
   onError: (error: unknown) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
+  // PayPal owns a live button/popup lifecycle. Keep its instance mounted while
+  // checkout state changes (for example, when createOrder saves the local order).
+  const callbacks = useRef({ createOrder, onPaid, onCancel, onError });
+  callbacks.current = { createOrder, onPaid, onCancel, onError };
   useEffect(() => {
     if (!config.paypal_client_id || !config.currency || !config.checkout_enabled || !container.current) return;
     let active = true;
     let buttons: PaypalButtons | undefined;
+    console.info('[checkout] Initializing PayPal buttons', { mode: config.paypal_mode, currency: config.currency });
     void loadPaypalSdk(config.paypal_client_id, config.currency).then(paypal => {
       if (!active || !container.current) return;
       buttons = paypal.Buttons({
-        createOrder,
-        onApprove: async data => { await onPaid(data.orderID); },
-        onCancel,
-        onError
+        createOrder: () => callbacks.current.createOrder(),
+        onApprove: async data => { await callbacks.current.onPaid(data.orderID); },
+        onCancel: () => callbacks.current.onCancel?.(),
+        onError: error => callbacks.current.onError(error)
       });
       return buttons.render(container.current);
-    }).catch(onError);
+    }).catch(error => {
+      console.error('[checkout] PayPal SDK initialization failed', { errorType: error instanceof Error ? error.name : 'UnknownError' });
+      callbacks.current.onError(error);
+    });
     return () => { active = false; buttons?.close?.(); };
-  }, [config.checkout_enabled, config.currency, config.paypal_client_id, createOrder, onCancel, onError]);
+  }, [config.checkout_enabled, config.currency, config.paypal_client_id]);
   return <div ref={container} className="paypal-button-container" aria-label="Pay with PayPal" />;
 }
 
@@ -213,9 +221,11 @@ export function ShopCheckoutPage({ onNavigate }: { onNavigate: Navigate }) {
         delivery_address: values.address
       });
       if (!order.paypal_order_id) throw new Error('PayPal did not return an order reference.');
+      console.info('[checkout] PayPal order ready', { orderId: order.order_id, paypalOrderId: order.paypal_order_id });
       setCreatedOrder(order);
       return order.paypal_order_id;
     } catch (createError) {
+      console.error('[checkout] Order creation failed', { error: (createError as Error)?.message || 'Unknown error' });
       setOrderError((createError as Error).message);
       throw createError;
     } finally { setBusy(false); }
@@ -223,17 +233,20 @@ export function ShopCheckoutPage({ onNavigate }: { onNavigate: Navigate }) {
 
   const completePayment = useCallback(async (paypalOrderId: string) => {
     if (!createdOrder || paypalOrderId !== createdOrder.paypal_order_id) throw new Error('PayPal returned a different order than the one created by this checkout.');
+    console.info('[checkout] Buyer approved PayPal order', { orderId: createdOrder.order_id, paypalOrderId });
     setBusy(true); setOrderError('');
     try {
       const paid = await captureShopOrder(createdOrder.order_id);
       onNavigate(`/orders/${encodeURIComponent(paid.order_id)}`);
     } catch (captureError) {
+      console.error('[checkout] Capture request failed', { orderId: createdOrder.order_id, error: (captureError as Error)?.message || 'Unknown error' });
       setOrderError((captureError as Error).message);
       throw captureError;
     } finally { setBusy(false); }
   }, [createdOrder, onNavigate]);
 
   const payPalError = useCallback((paymentError: unknown) => {
+    console.error('[checkout] PayPal SDK error', { error: (paymentError as Error)?.message || 'Unknown error' });
     setOrderError((paymentError as Error)?.message || 'PayPal could not complete checkout. You can try again.');
   }, []);
 
@@ -271,7 +284,7 @@ export function ShopCheckoutPage({ onNavigate }: { onNavigate: Navigate }) {
           {orderError && <ShopError message={orderError} />}
           {createdOrder?.payment_status === 'pending' && <div className="shop-pending-payment"><strong>Payment pending</strong><span>Complete payment before this reservation expires.</span><OrderExpiryCountdown expiresAt={createdOrder.expires_at} /></div>}
           {!config?.checkout_enabled && <p className="shop-configuration-note">PayPal checkout is unavailable until the store configures its currency and PayPal credentials.</p>}
-          {config && !unavailable && createdOrder?.payment_status === 'pending' && checkoutExpiry.expired ? <ShopError message="This payment reservation has expired. Return to your bag to start a new checkout." /> : config && !unavailable && <PayPalButton config={config} createOrder={createPaypalOrder} onPaid={completePayment} onError={payPalError} onCancel={() => setOrderError('Payment was cancelled. The pending order remains available in order history until its reservation expires.')} />}
+          {config && !unavailable && createdOrder?.payment_status === 'pending' && checkoutExpiry.expired ? <ShopError message="This payment reservation has expired. Return to your bag to start a new checkout." /> : config && !unavailable && <PayPalButton config={config} createOrder={createPaypalOrder} onPaid={completePayment} onError={payPalError} onCancel={() => { console.info('[checkout] Buyer cancelled PayPal checkout', { orderId: createdOrder?.order_id ?? null }); setOrderError('Payment was cancelled. The pending order remains available in order history until its reservation expires.'); }} />}
           {busy && <p className="shop-payment-progress"><LoaderCircle size={15} className="spin" /> Contacting PayPal securely…</p>}
           {unavailable && <ShopError message="One or more cart items are unavailable or exceed the current stock. Return to your bag to adjust quantities." />}
         </form>
@@ -344,7 +357,7 @@ export function ShopOrderPage({ orderId, onNavigate }: { orderId: string; onNavi
         {paymentError && <ShopError message={paymentError} />}
         {order.payment_status === 'pending' && <section className="shop-pending-payment"><strong>Payment pending</strong><span>This order has not been paid. Complete payment before the reservation expires.</span>
           <OrderExpiryCountdown expiresAt={order.expires_at} />
-          {!orderExpiry.expired && config && <PayPalButton config={config} createOrder={retryOrderPayment} onPaid={completePayment} onError={paypalError} onCancel={() => setPaymentError('Payment was cancelled. This order remains unpaid until completed or its reservation expires.')} />}
+          {!orderExpiry.expired && config && <PayPalButton config={config} createOrder={retryOrderPayment} onPaid={completePayment} onError={paypalError} onCancel={() => { console.info('[checkout] Buyer cancelled PayPal checkout', { orderId: order.order_id }); setPaymentError('Payment was cancelled. This order remains unpaid until completed or its reservation expires.'); }} />}
           {orderExpiry.expired && <span className="order-expiry expired">This reservation has expired. Start a new checkout from your bag.</span>}
         </section>}
         <article className="shop-invoice" id="shop-invoice">

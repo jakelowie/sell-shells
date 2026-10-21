@@ -3,7 +3,7 @@ const { test } = require("node:test");
 
 const { cartItemSchema, createOrderSchema } = require("../dist/validation/shop.js");
 const { listShellImagesSchema } = require("../dist/validation/shell-image.js");
-const { formatPayPalAmount } = require("../dist/services/paypal.service.js");
+const { formatPayPalAmount, validatePayPalOrder } = require("../dist/services/paypal.service.js");
 const { calculateTotalAvailable } = require("../dist/services/stock-info.service.js");
 
 const validCheckout = {
@@ -47,6 +47,17 @@ test("PayPal amounts use the configured currency precision without silent roundi
   assert.equal(formatPayPalAmount(12.345, "KWD"), "12.345");
   assert.throws(() => formatPayPalAmount(12.5, "JPY"), /more decimal places/i);
   assert.throws(() => formatPayPalAmount(Number.POSITIVE_INFINITY, "USD"), /amount is invalid/i);
+});
+
+test("PayPal capture is accepted only for the expected completed order, amount, and currency", () => {
+  const expected = { paypalOrderId: "PAYPAL-ORDER-1", localOrderId: "local-order-1", expectedAmount: 15, currency: "USD", requireCompleted: true };
+  const completed = {
+    id: "PAYPAL-ORDER-1", status: "COMPLETED", purchase_units: [{ reference_id: "local-order-1", payments: { captures: [{ id: "CAPTURE-1", status: "COMPLETED", amount: { currency_code: "USD", value: "15.00" } }] } }]
+  };
+  assert.deepEqual(validatePayPalOrder(completed, expected), { orderId: "PAYPAL-ORDER-1", captureId: "CAPTURE-1", amount: "15.00", currency: "USD" });
+  assert.throws(() => validatePayPalOrder({ ...completed, status: "APPROVED" }, expected), /payment has not completed/i);
+  assert.throws(() => validatePayPalOrder({ ...completed, id: "OTHER-ORDER" }, expected), /payment has not completed/i);
+  assert.throws(() => validatePayPalOrder({ ...completed, purchase_units: [{ ...completed.purchase_units[0], payments: { captures: [{ id: "CAPTURE-1", status: "COMPLETED", amount: { currency_code: "USD", value: "14.00" } }] } }] }, expected), /does not match/i);
 });
 
 test("batch shell-image queries accept bounded UUID lists without mixing single and batch filters", () => {

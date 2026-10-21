@@ -36,6 +36,10 @@ const orderBundleSchema = z.object({
 
 type OrderBundle = z.infer<typeof orderBundleSchema>;
 
+function logCheckout(event: string, details: Record<string, string | number | null>) {
+  console.info(JSON.stringify({ area: "shop.checkout", event, ...details }));
+}
+
 function parseCart(value: Json | null): z.infer<typeof cartSchema> {
   const result = cartSchema.safeParse(value);
   if (!result.success) throw new ApiError(502, "Cart data is temporarily unavailable.");
@@ -141,6 +145,7 @@ export async function createOrder(sessionId: string, input: CreateOrderInput) {
   throwDatabaseError(error);
   const bundle = parseOrderBundle(data);
   const order = bundle.order as ShopOrder;
+  logCheckout("local_order_ready", { orderId: order.order_id, status: order.payment_status, total: order.total, currency: order.currency });
   if (order.expires_at <= new Date().toISOString() && order.payment_status === "pending") {
     throw new ApiError(409, "This checkout attempt expired. Add the items to your cart again to restart checkout.");
   }
@@ -154,11 +159,13 @@ export async function createOrder(sessionId: string, input: CreateOrderInput) {
       currency: order.currency,
       requestId: order.idempotency_key
     });
+    logCheckout("paypal_order_created", { orderId: order.order_id, paypalOrderId: paypalOrder.id, paypalStatus: paypalOrder.status });
     const { data: updated, error: updateError } = await getSupabaseCommerceClient().from("shop_orders")
       .update({ paypal_order_id: paypalOrder.id, payment_metadata: { paypal_order_status: paypalOrder.status } })
       .eq("order_id", order.order_id).eq("session_id", sessionId).select("*").single();
     throwDatabaseError(updateError);
     if (!updated) throw new ApiError(502, "PayPal order was created but could not be linked to the local order. Retry with the same idempotency key.");
+    logCheckout("paypal_order_linked", { orderId: order.order_id, paypalOrderId: paypalOrder.id });
     return { ...updated, items: bundle.items };
   }
   return { ...order, items: bundle.items };
@@ -171,13 +178,24 @@ export async function captureOrder(sessionId: string, orderId: string) {
   if (order.payment_status !== "pending" || !order.paypal_order_id) throw new ApiError(409, "This order is not awaiting PayPal payment.");
   if (new Date(order.expires_at).getTime() <= Date.now()) throw new ApiError(409, "This checkout has expired. Start a new order from your cart.");
 
-  const capture = await capturePayPalOrder({
-    paypalOrderId: order.paypal_order_id,
-    localOrderId: order.order_id,
-    requestId: order.capture_request_id,
-    expectedAmount: order.total,
-    currency: order.currency
-  });
+  logCheckout("capture_requested", { orderId: order.order_id, paypalOrderId: order.paypal_order_id });
+  let capture;
+  try {
+    capture = await capturePayPalOrder({
+      paypalOrderId: order.paypal_order_id,
+      localOrderId: order.order_id,
+      requestId: order.capture_request_id,
+      expectedAmount: order.total,
+      currency: order.currency
+    });
+  } catch (error) {
+    logCheckout("capture_failed", {
+      orderId: order.order_id,
+      paypalOrderId: order.paypal_order_id,
+      errorType: error instanceof Error ? error.name : "UnknownError"
+    });
+    throw error;
+  }
   const { data, error } = await getSupabaseCommerceClient().from("shop_orders").update({
     order_status: "paid",
     payment_status: "captured",
@@ -187,6 +205,7 @@ export async function captureOrder(sessionId: string, orderId: string) {
   throwDatabaseError(error);
   const saved = data ?? await findOwnedOrder(sessionId, orderId);
   if (!saved || saved.payment_status !== "captured") throw new ApiError(409, "PayPal captured the payment, but the order status could not be reconciled. Contact the store with the order number.");
+  logCheckout("capture_verified_and_saved", { orderId: saved.order_id, paypalOrderId: saved.paypal_order_id, captureId: saved.paypal_capture_id, status: saved.payment_status });
   return { ...saved, items: await getOrderItems(saved.order_id) };
 }
 
