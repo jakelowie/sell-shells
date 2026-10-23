@@ -14,18 +14,19 @@ export const shellDescriptionColumns = {
   shell_type_id: uuidSchema.nullable().optional(),
   price: z.number().finite().nullable().optional(),
   locality_id: uuidSchema.nullable().optional(),
-  shell_weight: z.number().finite().nullable().optional()
+  shell_weight: z.string().max(80).nullable().optional(),
+  shell_size: z.string().max(120).nullable().optional()
 };
 
 export const createShellDescriptionSchema = z.object(shellDescriptionColumns).strict();
 export const updateShellDescriptionSchema = createShellDescriptionSchema.refine((value) => Object.keys(value).length > 0, "At least one field is required.");
 export const listShellDescriptionsSchema = pageQuerySchema.extend({
-  sort_by: z.enum(["created_at", "shell_name", "author", "deepness", "price", "locality_id", "shell_weight"]).default("created_at"),
+  sort_by: z.enum(["created_at", "shell_name", "author", "deepness", "price", "locality_id", "shell_weight", "shell_size"]).default("created_at"),
   shell_name: z.string().optional(),
   author: z.string().optional(),
   locality_id: uuidSchema.optional(),
   price: z.coerce.number().finite().optional(),
-  shell_weight: z.coerce.number().finite().optional(),
+  shell_weight: z.string().optional(),
   shell_stock_type_id: uuidSchema.optional(),
   shell_type_id: uuidSchema.optional(),
   include_deleted: z.enum(["true", "false"]).default("false").transform((value) => value === "true")

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Archive, Boxes, ChevronLeft, ChevronRight, CircleAlert, Image as ImageIcon, Layers3, LoaderCircle, MapPin, Menu, Plus, Search, Shell as ShellIcon, Tags, UsersRound, UserRoundCog, LogOut, ShoppingBag, X } from 'lucide-react';
 import InventoryTable from './components/InventoryTable';
 import RecordModal from './components/RecordModal';
-import type { Shell, ShellLocality, ShellType, StockType } from '../../shared/api';
-import { deleteInventoryRecord, getInventoryRecord, inventoryRecordId, inventoryRecordLabel, listInventory, listInventoryLookups, saveInventoryRecord } from './api/inventoryApi';
+import type { MeasurementUnit, Shell, ShellLocality, ShellType, StockType } from '../../shared/api';
+import { deleteInventoryRecord, getInventoryRecord, getShellImages, inventoryRecordId, inventoryRecordLabel, listInventory, listInventoryLookups, listUnits, saveInventoryRecord } from './api/inventoryApi';
 
 import type { InventorySection } from './types';
 import { useAuth } from '../auth/AuthProvider';
@@ -13,10 +13,11 @@ const nav: { id: Section | 'customers'; label: string; icon: typeof ShellIcon; g
   { id: 'shells', label: 'Shell collection', icon: ShellIcon, group: 'COLLECTION' },
   { id: 'stock-info', label: 'Stock information', icon: Boxes, group: 'COLLECTION' },
   { id: 'images', label: 'Image library', icon: ImageIcon, group: 'COLLECTION' },
-  { id: 'localities', label: 'Localities', icon: MapPin, group: 'COLLECTION' },
   { id: 'customers', label: 'Customers', icon: UsersRound, group: 'COLLECTION' },
-  { id: 'stock-types', label: 'Stock types', icon: Tags, group: 'CATALOGS' },
   { id: 'shell-types', label: 'Shell types', icon: Layers3, group: 'CATALOGS' },
+  { id: 'localities', label: 'Localities', icon: MapPin, group: 'CATALOGS' },
+  { id: 'stock-types', label: 'Stock types', icon: Tags, group: 'CATALOGS' },
+  { id: 'units', label: 'Measurement units', icon: Tags, group: 'CATALOGS' },
 ];
 const titles: Record<Section, { title: string; sub: string }> = {
   shells: { title: 'Shell collection', sub: 'A field guide to every shell in your collection.' },
@@ -25,18 +26,19 @@ const titles: Record<Section, { title: string; sub: string }> = {
   localities: { title: 'Localities', sub: 'Manage the collection locations assigned to shells.' },
   'stock-info': { title: 'Stock information', sub: 'Keep tabs on quantities and availability.' },
   images: { title: 'Image library', sub: 'Photographs and reference images for your shells.' },
+  units: { title: 'Measurement units', sub: 'Manage the unit labels used for shell size and weight.' },
 };
 
 export default function InventoryPage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const { user, role, signOut } = useAuth();
-  const [section, setSection] = useState<Section>('shells'), [page, setPage] = useState(0), [search, setSearch] = useState(''), [includeDeleted, setIncludeDeleted] = useState(false), [data, setData] = useState<unknown[]>([]), [total, setTotal] = useState(0), [shells, setShells] = useState<Shell[]>([]), [stocks, setStocks] = useState<StockType[]>([]), [types, setTypes] = useState<ShellType[]>([]), [localities, setLocalities] = useState<ShellLocality[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState(''), [dialog, setDialog] = useState<unknown | null>(null), [saving, setSaving] = useState(false), [toast, setToast] = useState(''), [mobileNav, setMobileNav] = useState(false);
+  const [section, setSection] = useState<Section>('shells'), [page, setPage] = useState(0), [search, setSearch] = useState(''), [includeDeleted, setIncludeDeleted] = useState(false), [data, setData] = useState<unknown[]>([]), [total, setTotal] = useState(0), [shells, setShells] = useState<Shell[]>([]), [stocks, setStocks] = useState<StockType[]>([]), [types, setTypes] = useState<ShellType[]>([]), [localities, setLocalities] = useState<ShellLocality[]>([]), [units, setUnits] = useState<MeasurementUnit[]>([]), [shellImages, setShellImages] = useState<import('../../shared/api').ShellImage[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState(''), [dialog, setDialog] = useState<unknown | null>(null), [saving, setSaving] = useState(false), [toast, setToast] = useState(''), [mobileNav, setMobileNav] = useState(false);
   const openSection = useCallback((target: Section) => { onNavigate('/admin'); setSection(target); setPage(0); setSearch(''); setError(''); setMobileNav(false); }, [onNavigate]);
   const meta = titles[section];
   const load = useCallback(async () => { setLoading(true); setError(''); try { const result = await listInventory(section, page, PAGE_SIZE, search, includeDeleted); setData(result.data); setTotal(result.pagination.total); } catch (e) { setError((e as Error).message); setData([]); setTotal(0); } finally { setLoading(false); } }, [section, page, search, includeDeleted]);
-  const loadLookups = useCallback(async () => { try { const lookups = await listInventoryLookups(); setShells(lookups.shells); setStocks(lookups.stocks); setTypes(lookups.types); setLocalities(lookups.localities); } catch { /* Lookup errors are reported by the active list request. */ } }, []);
+  const loadLookups = useCallback(async () => { try { const [lookups, unitResult] = await Promise.all([listInventoryLookups(), listUnits().catch(() => ({ data: [] as MeasurementUnit[] }))]); setShells(lookups.shells); setStocks(lookups.stocks); setTypes(lookups.types); setLocalities(lookups.localities); setUnits(unitResult.data); } catch { /* Lookup errors are reported by the active list request. */ } }, []);
   useEffect(() => { void load(); }, [load]); useEffect(() => { void loadLookups(); }, [loadLookups]);
   const notify = (msg: string) => { setToast(msg); window.setTimeout(() => setToast(''), 2600) };
-  const beginEdit = async (item: unknown) => { if (section === 'images') { setDialog({ mode: 'edit', item }); return; } try { const result = await getInventoryRecord(section, inventoryRecordId(section, item)); setDialog({ mode: 'edit', item: result.data }); } catch (e) { setError((e as Error).message); } };
+  const beginEdit = async (item: unknown) => { if (section === 'images') { setDialog({ mode: 'edit', item }); return; } try { const result = await getInventoryRecord(section, inventoryRecordId(section, item)); const record = result.data as Record<string, unknown>; setShellImages(section === 'shells' ? await getShellImages(String(record.shell_id)) : []); setDialog({ mode: 'edit', item: record }); } catch (e) { setError((e as Error).message); } };
   const save = async (form: HTMLFormElement) => {
     setSaving(true);
     try {
@@ -224,7 +226,7 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
 
             <button
               className="primary"
-              onClick={() => setDialog({ mode: 'create' })}
+              onClick={() => { setShellImages([]); setDialog({ mode: 'create' }); }}
             >
               <Plus size={17} />
               {section === 'images'
@@ -421,6 +423,8 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
           stocks={stocks}
           types={types}
           localities={localities}
+          units={units}
+          images={shellImages}
           saving={saving}
           error={error}
           onClose={() => setDialog(null)}

@@ -117,29 +117,6 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
           </a>
         </div>
 
-        <div className="hero-art" aria-hidden="true">
-          <div className="hero-orbit orbit-one" />
-          <div className="hero-orbit orbit-two" />
-
-          <div className="hero-shell">
-            {images[shells[0]?.shell_id]?.image_url ? (
-              <img
-                className="hero-photo"
-                src={images[shells[0].shell_id]?.image_url ?? undefined}
-                alt=""
-              />
-            ) : (
-              <Shell size={104} strokeWidth={0.8} />
-            )}
-          </div>
-
-          <span className="hero-caption">
-            THE QUIET BEAUTY OF THE SHORE
-          </span>
-
-          <span className="hero-index">01 — 04</span>
-        </div>
-
         <div className="hero-footnote">
           <span>Curated natural specimens</span>
           <span>
@@ -331,7 +308,7 @@ function Storefront({ selectedTypeId, onSelectType, onNavigate }: { selectedType
                       {shell.shell_weight != null && (
                         <div className="product-weight">
                           <span>Weight</span>
-                          <strong>{shell.shell_weight} kg</strong>
+                          <strong>{shell.shell_weight}</strong>
                         </div>
                       )}
                     </a>
@@ -453,7 +430,7 @@ function ShellDetails({
               setImages(
                 imageRecords.filter(
                   (image) => image.shell_id === shellId,
-                ),
+                ).sort((a, b) => Number(b.is_main_image === true) - Number(a.is_main_image === true)),
               );
             }
           } catch (imageLoadError) {
@@ -526,7 +503,8 @@ function ShellDetails({
       const records = await getAllImagesForShell(shellId);
 
       setImages(
-        records.filter((image) => image.shell_id === shellId),
+        records.filter((image) => image.shell_id === shellId)
+          .sort((a, b) => Number(b.is_main_image === true) - Number(a.is_main_image === true)),
       );
       setSelectedImage(0);
       setBroken([]);
@@ -581,7 +559,8 @@ function ShellDetails({
           'Price',
           shell.price == null ? null : formatPrice(shell.price, shopConfig?.currency ?? null),
         ],
-        ['Weight', shell.shell_weight == null ? null : String(shell.shell_weight) + ' kg'],
+        ['Size', shell.shell_size],
+        ['Weight', shell.shell_weight],
       ].filter((row): row is [string, string] => Boolean(row[1]))
     : [];
 

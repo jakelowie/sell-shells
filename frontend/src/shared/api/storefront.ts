@@ -67,9 +67,9 @@ export async function getShellImagesForShells(shellIds: string[]) {
   const images = [...firstPage.data, ...remainingPages.flatMap(page => page.data)];
   const bestImages: Record<string, ShellImage | undefined> = {};
   images.forEach(image => {
-    if (!image.shell_id || !image.image_url) return;
+    if (!image.shell_id || !image.image_url || image.is_main_image !== true) return;
     const current = bestImages[image.shell_id];
-    if (!current || (image.is_main_image && !current.is_main_image)) bestImages[image.shell_id] = image;
+    if (!current) bestImages[image.shell_id] = image;
   });
   return bestImages;
 }

@@ -139,6 +139,12 @@ export type Database = {
         Update: ShellImageUpdate;
         Relationships: [ShellImageRelationship];
       };
+      unit_of_measurement: {
+        Row: { id: string; created_at: string; unit_name: string | null; measurement_for: string | null };
+        Insert: { id?: string; created_at?: string; unit_name?: string | null; measurement_for?: string | null };
+        Update: Partial<{ unit_name: string | null; measurement_for: string | null }>;
+        Relationships: [];
+      };
       shell_type: {
         Row: ShellType;
         Insert: ShellTypeInsert;
@@ -184,6 +190,7 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      set_shell_main_image: { Args: { p_shell_id: string; p_image_id: string }; Returns: ShellImage };
       assign_user_role: {
         Args: { target_user_id: string; new_role: AppRole };
         Returns: UserRole;

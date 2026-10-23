@@ -56,6 +56,7 @@ export async function getShellImage(id: string): Promise<ShellImageWithUrl | nul
 }
 
 export async function createShellImage(input: { shell_id?: string | null; is_main_image?: boolean | null }, image: UploadedImage): Promise<ShellImageWithUrl> {
+  if (input.is_main_image && !input.shell_id) throw new DatabaseOperationError("23514", "A main image must be linked to a shell.");
   const storagePath = `${randomUUID()}${image.extension}`;
   const storage = getSupabaseStorageClient().storage.from(storageBucket);
   const { error: uploadError } = await storage.upload(storagePath, image.buffer, {
@@ -64,17 +65,24 @@ export async function createShellImage(input: { shell_id?: string | null; is_mai
   });
   if (uploadError) throw new StorageOperationError("upload", uploadError.message);
 
+  let insertedImageId: string | null = null;
   try {
     const { data, error } = await getSupabaseClient().from("shell_images").insert({
       file_name: basename(image.originalName.replaceAll("\\", "/")),
       storage_path: storagePath,
       shell_id: input.shell_id ?? null,
-      ...(input.is_main_image !== undefined ? { is_main_image: input.is_main_image } : {})
+      is_main_image: false
     }).select("*").single();
     throwDatabaseError(error);
     if (!data) throw new DatabaseOperationError("PGRST_NO_DATA");
-    return addSignedUrl(data);
+    insertedImageId = data.image_id;
+    const saved = input.is_main_image ? await setMainImage(data.shell_id!, data.image_id) : data;
+    return addSignedUrl(saved);
   } catch (error) {
+    if (insertedImageId) {
+      const { error: deleteError } = await getSupabaseClient().from("shell_images").delete().eq("image_id", insertedImageId);
+      if (deleteError) console.error("Could not clean up shell image metadata after main-image selection failed.");
+    }
     const { error: cleanupError } = await storage.remove([storagePath]);
     if (cleanupError) console.error("Could not clean up uploaded shell image after database insert failed.");
     throw error;
@@ -82,14 +90,42 @@ export async function createShellImage(input: { shell_id?: string | null; is_mai
 }
 
 export async function updateShellImage(id: string, input: ShellImageUpdate): Promise<ShellImageWithUrl | null> {
+  if (input.is_main_image === true) {
+    const existing = await getShellImageRecord(id);
+    if (!existing) return null;
+    if (!existing.shell_id) throw new DatabaseOperationError("23514", "Main images must be linked to a shell.");
+    if (input.shell_id !== undefined && input.shell_id !== existing.shell_id) {
+      throw new DatabaseOperationError("23514", "Choose a new main image from the shell that will own it.");
+    }
+    const selected = await setMainImage(existing.shell_id, id);
+    const { is_main_image: _isMainImage, shell_id: _shellId, ...otherFields } = input;
+    if (Object.keys(otherFields).length) {
+      const { data, error } = await getSupabaseClient().from("shell_images").update(otherFields).eq("image_id", id).select("*").single();
+      throwDatabaseError(error);
+      return data ? addSignedUrl(data) : addSignedUrl(selected);
+    }
+    return addSignedUrl(selected);
+  }
+  if (input.is_main_image === false) {
+    const existing = await getShellImageRecord(id);
+    if (existing?.is_main_image) throw new DatabaseOperationError("23514", "Choose a replacement main image before changing this image.");
+  }
   const { data, error } = await getSupabaseClient().from("shell_images").update(input).eq("image_id", id).select("*").maybeSingle();
   throwDatabaseError(error);
   return data ? addSignedUrl(data) : null;
 }
 
+async function setMainImage(shellId: string, imageId: string): Promise<ShellImage> {
+  const { data, error } = await getSupabaseClient().rpc("set_shell_main_image", { p_shell_id: shellId, p_image_id: imageId });
+  throwDatabaseError(error);
+  if (!data) throw new DatabaseOperationError("PGRST_NO_DATA");
+  return data as ShellImage;
+}
+
 export async function deleteShellImage(id: string): Promise<ShellImage | null> {
   const existing = await getShellImageRecord(id);
   if (!existing) return null;
+  if (existing.is_main_image) throw new DatabaseOperationError("23514", "Choose a replacement main image before deleting this image.");
 
   let savedFile: Uint8Array | null = null;
   if (isValidStoragePath(existing.storage_path)) {

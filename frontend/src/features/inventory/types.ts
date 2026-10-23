@@ -1,1 +1,1 @@
-export type InventorySection = 'shells' | 'stock-types' | 'shell-types' | 'localities' | 'stock-info' | 'images';
+export type InventorySection = 'shells' | 'stock-types' | 'shell-types' | 'localities' | 'stock-info' | 'images' | 'units';

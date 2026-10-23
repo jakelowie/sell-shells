@@ -187,9 +187,9 @@
             "name": "shell_weight",
             "in": "query",
             "required": false,
-            "description": "Exact numeric shell weight.",
+            "description": "Exact text shell weight, including any unit.",
             "schema": {
-              "type": "number"
+              "type": "string"
             }
           }
         ],
@@ -4245,7 +4245,13 @@
           },
           "shell_weight": {
             "type": [
-              "number",
+              "string",
+              "null"
+            ]
+          },
+          "shell_size": {
+            "type": [
+              "string",
               "null"
             ]
           }
@@ -4328,7 +4334,13 @@
           },
           "shell_weight": {
             "type": [
-              "number",
+              "string",
+              "null"
+            ]
+          },
+          "shell_size": {
+            "type": [
+              "string",
               "null"
             ]
           }

@@ -1,5 +1,6 @@
 export type Page<T> = { data: T[]; pagination: { limit: number; offset: number; total: number } };
-export type Shell = { shell_id: string; created_at: string; shell_name: string | null; author: string | null; deepness: string | null; from: string | null; note: string | null; is_deleted: boolean | null; shell_stock_type_id: string | null; shell_type_id: string | null; price: number | null; locality_id: string | null; shell_weight: number | null };
+export type Shell = { shell_id: string; created_at: string; shell_name: string | null; author: string | null; deepness: string | null; from: string | null; note: string | null; is_deleted: boolean | null; shell_stock_type_id: string | null; shell_type_id: string | null; price: number | null; locality_id: string | null; shell_weight: string | null; shell_size: string | null };
+export type MeasurementUnit = { id: string; created_at: string; unit_name: string | null; measurement_for: 'size' | 'weight' | null };
 export type ShellLocality = { locality_id: string; created_at: string; locality: string | null };
 export type StockType = { stock_id: string; created_at: string; stock_name: string | null };
 export type ShellType = { type_id: string; created_at: string; shell_type_name: string | null };

@@ -30,6 +30,7 @@ let failNextShellImageInsert;
 let failNextStorageUpload;
 let signedTtls;
 let shellImageNextNumber;
+let unitNextNumber;
 let lastApiRequestAt = 0;
 
 function sendJson(response, status, payload, headers = {}) {
@@ -126,6 +127,18 @@ function databaseHandler(request, response) {
       sendJson(response, 200, target);
       return;
     }
+    if (table === "rpc/set_shell_main_image" && request.method === "POST") {
+      const selection = await readBody(request);
+      if (authRole !== "admin" && authRole !== "superadmin") {
+        sendDbError(response, 403, "42501", "Only admins can select a main image.");
+        return;
+      }
+      const image = records.shell_images.find(row => row.image_id === selection.p_image_id && row.shell_id === selection.p_shell_id);
+      if (!image) { sendDbError(response, 409, "23503", "Image does not belong to shell."); return; }
+      records.shell_images.filter(row => row.shell_id === selection.p_shell_id).forEach(row => { row.is_main_image = row.image_id === image.image_id; });
+      sendJson(response, 200, image);
+      return;
+    }
     if (!Object.hasOwn(records, table)) {
       sendDbError(response, 404, "PGRST205", "Table not found");
       return;
@@ -157,6 +170,12 @@ function databaseHandler(request, response) {
       } else if (value.startsWith("in.(") && key !== "select") {
         const expected = value.slice(4, -1).replaceAll('"', "").split(",");
         selected = selected.filter((row) => expected.includes(String(row[key])));
+      } else if (value.startsWith("ilike.") && key !== "select") {
+        const expected = decodeURIComponent(value.slice(6)).toLocaleLowerCase();
+        selected = selected.filter(row => String(row[key] ?? "").toLocaleLowerCase() === expected);
+      } else if (value.startsWith("neq.") && key !== "select") {
+        const expected = decodeURIComponent(value.slice(4));
+        selected = selected.filter(row => String(row[key]) !== expected);
       }
     }
 
@@ -193,7 +212,9 @@ function databaseHandler(request, response) {
             ? { type_id: body.type_id ?? ids.shell_type, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", shell_type_name: "", ...body }
             : table === "shell_stocks_info"
               ? { stock_info_id: body.stock_info_id ?? stockInfoNextId++, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", shell_id: null, shell_stock_id: null, shell_stock: null, shell_pcs_per_stock: null, shell_total_available: null, ...body }
-              : { image_id: body.image_id ?? `66666666-6666-4666-8666-${String(shellImageNextNumber++).padStart(12, "0")}`, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", file_name: "", storage_path: null, is_main_image: null, shell_id: null, ...body };
+              : table === "unit_of_measurement"
+                ? { id: body.id ?? `99999999-9999-4999-8999-${String(unitNextNumber++).padStart(12, "0")}`, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", unit_name: null, measurement_for: null, ...body }
+                : { image_id: body.image_id ?? `66666666-6666-4666-8666-${String(shellImageNextNumber++).padStart(12, "0")}`, created_at: body.created_at ?? "2026-10-14T00:00:00.000Z", file_name: "", storage_path: null, is_main_image: null, shell_id: null, ...body };
 
       if (rows.some((row) => String(row[idColumn]) === String(newRow[idColumn]))) {
         sendDbError(response, 409, "23505", "duplicate key value violates unique constraint");
@@ -274,12 +295,13 @@ function databaseHandler(request, response) {
 
 before(async () => {
   records = {
-    shell_description: [{ shell_id: shellId, created_at: "2026-10-13T00:00:00.000Z", shell_name: "Tiger Cowrie", author: "Linnaeus", locality_id: localityId, price: 25, shell_weight: 12.5, deepness: "Shallow water", from: "Collected", note: null, is_deleted: false, shell_stock_type_id: stockTypeId, shell_type_id: ids.shell_type }],
+    shell_description: [{ shell_id: shellId, created_at: "2026-10-13T00:00:00.000Z", shell_name: "Tiger Cowrie", author: "Linnaeus", locality_id: localityId, price: 25, shell_weight: "12.5 g", shell_size: "5–7 cm", deepness: "Shallow water", from: "Collected", note: null, is_deleted: false, shell_stock_type_id: stockTypeId, shell_type_id: ids.shell_type }],
     shell_stock_type: [{ stock_id: stockTypeId, created_at: "2026-10-13T00:00:00.000Z", stock_name: "Bulk" }],
     shell_type: [{ type_id: ids.shell_type, created_at: "2026-10-13T00:00:00.000Z", shell_type_name: "Cowrie" }],
     shell_locality: [{ locality_id: localityId, created_at: "2026-10-13T00:00:00.000Z", locality: "Philippines" }],
     shell_stocks_info: [{ stock_info_id: 101, created_at: "2026-10-13T00:00:00.000Z", shell_id: shellId, shell_stock_id: stockTypeId, shell_stock: 2.5, shell_pcs_per_stock: 12, shell_total_available: 30 }],
     shell_images: [{ image_id: shellImageId, created_at: "2026-10-13T00:00:00.000Z", file_name: "tiger-cowrie.jpg", storage_path: null, is_main_image: false, shell_id: shellId }],
+    unit_of_measurement: [{ id: "99999999-9999-4999-8999-000000000001", created_at: "2026-10-13T00:00:00.000Z", unit_name: "cm", measurement_for: "size" }, { id: "99999999-9999-4999-8999-000000000002", created_at: "2026-10-13T00:00:00.000Z", unit_name: "g", measurement_for: "weight" }],
     user_roles: [
       { user_id: appUsers["user-token"].id, email: appUsers["user-token"].email, role: "user", created_at: "2026-10-15T00:00:00.000Z", updated_at: "2026-10-15T00:00:00.000Z" },
       { user_id: appUsers["admin-token"].id, email: appUsers["admin-token"].email, role: "admin", created_at: "2026-10-15T00:00:00.000Z", updated_at: "2026-10-15T00:00:00.000Z" },
@@ -293,6 +315,7 @@ before(async () => {
   failNextStorageUpload = false;
   signedTtls = [];
   shellImageNextNumber = 1;
+  unitNextNumber = 3;
 
   dbServer = http.createServer(databaseHandler);
   await new Promise((resolve) => dbServer.listen(0, "127.0.0.1", resolve));
@@ -387,10 +410,11 @@ test("health and shell description CRUD use Supabase", async () => {
   assert.match(created.body.data.shell_id, /^[0-9a-f-]{36}$/i);
   assert.equal(created.body.data.shell_stock_type_id, null);
 
-  const updated = await api(`/api/shells/${created.body.data.shell_id}`, { method: "PATCH", body: { locality_id: localityId, price: 42.5, shell_weight: 18.25 } });
+  const updated = await api(`/api/shells/${created.body.data.shell_id}`, { method: "PATCH", body: { locality_id: localityId, price: 42.5, shell_weight: "18.25 oz", shell_size: "approximately 3 inches" } });
   assert.equal(updated.body.data.locality_id, localityId);
   assert.equal(updated.body.data.price, 42.5);
-  assert.equal(updated.body.data.shell_weight, 18.25);
+  assert.equal(updated.body.data.shell_weight, "18.25 oz");
+  assert.equal(updated.body.data.shell_size, "approximately 3 inches");
   const deleted = await api(`/api/shells/${shellId}`, { method: "DELETE" });
   assert.equal(deleted.body.data.is_deleted, true);
   assert.equal((await api(`/api/shells/${shellId}`)).status, 404);
@@ -410,7 +434,7 @@ test("shell stock types support CRUD and preserve FK constraints", async () => {
   assert.equal((await api("/api/shell-stock-types?limit=10&stock_name=Bulk")).body.data.length, 1);
   assert.equal((await api(`/api/shell-stock-types/${stockTypeId}`)).status, 200);
   const created = await api("/api/shell-stock-types", { method: "POST", body: { stock_name: "Retail" } });
-  assert.equal(created.status, 201);
+  assert.equal(created.status, 201, JSON.stringify(created.body));
   const updated = await api(`/api/shell-stock-types/${created.body.data.stock_id}`, { method: "PATCH", body: { stock_name: "Retail bag" } });
   assert.equal(updated.body.data.stock_name, "Retail bag");
   assert.equal((await api(`/api/shell-stock-types/${stockTypeId}`, { method: "DELETE" })).status, 409);
@@ -449,12 +473,33 @@ test("shell localities support CRUD and shell locality, price, and weight schema
   assert.equal(shellList.status, 200);
   assert.equal(shellList.body.data[0].locality_id, localityId);
   assert.equal(shellList.body.data[0].price, 25);
-  assert.equal(shellList.body.data[0].shell_weight, 12.5);
-  assert.equal((await api(`/api/shells?shell_weight=12.5&include_deleted=true`)).body.data[0].shell_id, shellId);
-  assert.equal((await api("/api/shells", { method: "POST", body: { shell_weight: "not-a-number" } })).status, 400);
+  assert.equal(shellList.body.data[0].shell_weight, "12.5 g");
+  assert.equal(shellList.body.data[0].shell_size, "5–7 cm");
+  assert.equal((await api(`/api/shells?shell_weight=12.5%20g&include_deleted=true`)).body.data[0].shell_id, shellId);
+  assert.equal((await api("/api/shells", { method: "POST", body: { shell_weight: 12.5 } })).status, 400);
   const invalidLocality = await api("/api/shells", { method: "POST", body: { locality_id: newId, price: 10 } });
   assert.equal(invalidLocality.status, 409);
   assert.equal((await api("/api/shells", { method: "POST", body: { price: "not-a-number" } })).status, 400);
+});
+
+test("measurement units are admin-managed, category-filtered, validated, and editable", async () => {
+  assert.equal((await api("/api/units", { token: null })).status, 401);
+  assert.equal((await api("/api/units", { token: "invalid-role-token" })).status, 403);
+  const standardPage = await api("/api/units?limit=12&offset=0&sort_by=created_at&sort_order=desc");
+  assert.equal(standardPage.status, 200);
+  assert.equal(standardPage.body.pagination.total, 2);
+  const sizes = await api("/api/units?limit=12&offset=0&sort_by=created_at&sort_order=desc&measurement_for=size");
+  assert.deepEqual(sizes.body.data.map(unit => unit.unit_name), ["cm"]);
+  assert.deepEqual(sizes.body.pagination, { limit: 12, offset: 0, total: 1 });
+  const created = await api("/api/units", { method: "POST", body: { unit_name: "inch", measurement_for: "size" } });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const duplicate = await api("/api/units", { method: "POST", body: { unit_name: "inch", measurement_for: "size" } });
+  assert.equal(duplicate.status, 409);
+  const invalid = await api("/api/units", { method: "POST", body: { unit_name: "oz", measurement_for: "Weight" } });
+  assert.equal(invalid.status, 400);
+  const updated = await api(`/api/units/${created.body.data.id}`, { method: "PATCH", body: { measurement_for: "weight" } });
+  assert.equal(updated.body.data.measurement_for, "weight");
+  assert.equal((await api(`/api/units/${created.body.data.id}`, { method: "DELETE" })).status, 200);
 });
 
 test("shell stocks info supports CRUD, filtering, numeric fields, and FK validation", async () => {
@@ -519,6 +564,14 @@ test("shell images support CRUD and referenced shell integrity", async () => {
   const invalidForeignKey = await api("/api/shell-images", { method: "POST", body: invalidForeignKeyForm });
   assert.equal(invalidForeignKey.status, 409);
   assert.equal(storageObjects.size, 0);
+});
+
+test("main image selection is persisted atomically and cannot be unset or deleted without replacement", async () => {
+  const selected = await api(`/api/shell-images/${shellImageId}`, { method: "PATCH", body: { is_main_image: true } });
+  assert.equal(selected.status, 200);
+  assert.equal(records.shell_images.find(image => image.image_id === shellImageId).is_main_image, true);
+  assert.equal((await api(`/api/shell-images/${shellImageId}`, { method: "PATCH", body: { is_main_image: false } })).status, 400);
+  assert.equal((await api(`/api/shell-images/${shellImageId}`, { method: "DELETE" })).status, 400);
 });
 
 test("shell image uploads reject unsupported and oversized images and roll back failed inserts", async () => {
