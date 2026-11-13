@@ -15,23 +15,79 @@ const validCheckout = {
     province: "Cebu",
     postal_code: "6000",
     country: "Philippines",
-    address_details: "Leave at reception"
-  }
+    address_details: "Leave at reception",
+  },
+  shipping_rate_id: "22222222-2222-4222-8222-222222222222",
+  shipping_country_code: "PH",
 };
 
 test("shop validation accepts a complete guest checkout and rejects malformed customer data", () => {
   assert.equal(createOrderSchema.safeParse(validCheckout).success, true);
-  assert.equal(createOrderSchema.safeParse({ ...validCheckout, customer: { ...validCheckout.customer, email: "bad-address" } }).success, false);
-  assert.equal(createOrderSchema.safeParse({ ...validCheckout, customer: { ...validCheckout.customer, phone: "......." } }).success, false);
-  assert.equal(createOrderSchema.safeParse({ ...validCheckout, delivery_address: { ...validCheckout.delivery_address, city: "" } }).success, false);
+  assert.equal(
+    createOrderSchema.safeParse({
+      ...validCheckout,
+      customer: { ...validCheckout.customer, email: "bad-address" },
+    }).success,
+    false,
+  );
+  assert.equal(
+    createOrderSchema.safeParse({
+      ...validCheckout,
+      customer: { ...validCheckout.customer, phone: "......." },
+    }).success,
+    false,
+  );
+  assert.equal(
+    createOrderSchema.safeParse({
+      ...validCheckout,
+      delivery_address: { ...validCheckout.delivery_address, city: "" },
+    }).success,
+    false,
+  );
   assert.equal(createOrderSchema.safeParse({ ...validCheckout, admin: true }).success, false);
 });
 
+test("checkout requires a valid configured delivery rate and country code", () => {
+  const rate = "22222222-2222-4222-8222-222222222222";
+  assert.equal(
+    createOrderSchema.safeParse({
+      ...validCheckout,
+      shipping_rate_id: rate,
+      shipping_country_code: "ph",
+    }).data.shipping_country_code,
+    "PH",
+  );
+  assert.equal(
+    createOrderSchema.safeParse({ ...validCheckout, shipping_rate_id: undefined }).success,
+    false,
+  );
+  assert.equal(
+    createOrderSchema.safeParse({ ...validCheckout, shipping_country_code: undefined }).success,
+    false,
+  );
+  assert.equal(
+    createOrderSchema.safeParse({ ...validCheckout, shipping_country_code: "PHL" }).success,
+    false,
+  );
+});
+
 test("shop cart quantity validation enforces UUID and bounded integer quantities", () => {
-  assert.equal(cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 2 }).success, true);
+  assert.equal(
+    cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 2 })
+      .success,
+    true,
+  );
   assert.equal(cartItemSchema.safeParse({ shell_id: "not-a-uuid", quantity: 1 }).success, false);
-  assert.equal(cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 0 }).success, false);
-  assert.equal(cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 1.5 }).success, false);
+  assert.equal(
+    cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 0 })
+      .success,
+    false,
+  );
+  assert.equal(
+    cartItemSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", quantity: 1.5 })
+      .success,
+    false,
+  );
 });
 
 test("stock totals divide for per-set stock types and multiply for other stock types", () => {
@@ -50,18 +106,82 @@ test("PayPal amounts use the configured currency precision without silent roundi
 });
 
 test("PayPal capture is accepted only for the expected completed order, amount, and currency", () => {
-  const expected = { paypalOrderId: "PAYPAL-ORDER-1", localOrderId: "local-order-1", expectedAmount: 15, currency: "USD", requireCompleted: true };
-  const completed = {
-    id: "PAYPAL-ORDER-1", status: "COMPLETED", purchase_units: [{ reference_id: "local-order-1", payments: { captures: [{ id: "CAPTURE-1", status: "COMPLETED", amount: { currency_code: "USD", value: "15.00" } }] } }]
+  const expected = {
+    paypalOrderId: "PAYPAL-ORDER-1",
+    localOrderId: "local-order-1",
+    expectedAmount: 15,
+    currency: "USD",
+    requireCompleted: true,
   };
-  assert.deepEqual(validatePayPalOrder(completed, expected), { orderId: "PAYPAL-ORDER-1", captureId: "CAPTURE-1", amount: "15.00", currency: "USD" });
-  assert.throws(() => validatePayPalOrder({ ...completed, status: "APPROVED" }, expected), /payment has not completed/i);
-  assert.throws(() => validatePayPalOrder({ ...completed, id: "OTHER-ORDER" }, expected), /payment has not completed/i);
-  assert.throws(() => validatePayPalOrder({ ...completed, purchase_units: [{ ...completed.purchase_units[0], payments: { captures: [{ id: "CAPTURE-1", status: "COMPLETED", amount: { currency_code: "USD", value: "14.00" } }] } }] }, expected), /does not match/i);
+  const completed = {
+    id: "PAYPAL-ORDER-1",
+    status: "COMPLETED",
+    purchase_units: [
+      {
+        reference_id: "local-order-1",
+        payments: {
+          captures: [
+            {
+              id: "CAPTURE-1",
+              status: "COMPLETED",
+              amount: { currency_code: "USD", value: "15.00" },
+            },
+          ],
+        },
+      },
+    ],
+  };
+  assert.deepEqual(validatePayPalOrder(completed, expected), {
+    orderId: "PAYPAL-ORDER-1",
+    captureId: "CAPTURE-1",
+    amount: "15.00",
+    currency: "USD",
+  });
+  assert.throws(
+    () => validatePayPalOrder({ ...completed, status: "APPROVED" }, expected),
+    /payment has not completed/i,
+  );
+  assert.throws(
+    () => validatePayPalOrder({ ...completed, id: "OTHER-ORDER" }, expected),
+    /payment has not completed/i,
+  );
+  assert.throws(
+    () =>
+      validatePayPalOrder(
+        {
+          ...completed,
+          purchase_units: [
+            {
+              ...completed.purchase_units[0],
+              payments: {
+                captures: [
+                  {
+                    id: "CAPTURE-1",
+                    status: "COMPLETED",
+                    amount: { currency_code: "USD", value: "14.00" },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        expected,
+      ),
+    /does not match/i,
+  );
 });
 
 test("batch shell-image queries accept bounded UUID lists without mixing single and batch filters", () => {
-  assert.equal(listShellImagesSchema.safeParse({ shell_ids: "11111111-1111-4111-8111-111111111111" }).success, true);
+  assert.equal(
+    listShellImagesSchema.safeParse({ shell_ids: "11111111-1111-4111-8111-111111111111" }).success,
+    true,
+  );
   assert.equal(listShellImagesSchema.safeParse({ shell_ids: "invalid" }).success, false);
-  assert.equal(listShellImagesSchema.safeParse({ shell_id: "11111111-1111-4111-8111-111111111111", shell_ids: "11111111-1111-4111-8111-111111111111" }).success, false);
+  assert.equal(
+    listShellImagesSchema.safeParse({
+      shell_id: "11111111-1111-4111-8111-111111111111",
+      shell_ids: "11111111-1111-4111-8111-111111111111",
+    }).success,
+    false,
+  );
 });

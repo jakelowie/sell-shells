@@ -24,13 +24,21 @@ export const getCart: RequestHandler = async (request, response) => {
 
 export const addCartItem: RequestHandler = async (request, response) => {
   const body = parseOrThrow(cartItemSchema, request.body, "cart item");
-  response.status(201).json({ data: await service.addCartItem(requireSessionId(request), body.shell_id, body.quantity) });
+  response.status(201).json({
+    data: await service.addCartItem(requireSessionId(request), body.shell_id, body.quantity),
+  });
 };
 
 export const updateCartItem: RequestHandler = async (request, response) => {
   const shellId = parseOrThrow(uuidSchema, request.params.shellId, "shell ID");
-  const quantityBody = parseOrThrow(cartItemSchema.omit({ shell_id: true }), request.body, "cart quantity");
-  response.json({ data: await service.setCartItem(requireSessionId(request), shellId, quantityBody.quantity) });
+  const quantityBody = parseOrThrow(
+    cartItemSchema.omit({ shell_id: true }),
+    request.body,
+    "cart quantity",
+  );
+  response.json({
+    data: await service.setCartItem(requireSessionId(request), shellId, quantityBody.quantity),
+  });
 };
 
 export const removeCartItem: RequestHandler = async (request, response) => {
@@ -50,7 +58,9 @@ export const captureOrder: RequestHandler = async (request, response) => {
 
 export const listOrders: RequestHandler = async (request, response) => {
   const query = parseOrThrow(pageQuerySchema, request.query, "order query");
-  response.json(await service.listOwnedOrders(requireSessionId(request), query.limit, query.offset));
+  response.json(
+    await service.listOwnedOrders(requireSessionId(request), query.limit, query.offset),
+  );
 };
 
 export const getOrder: RequestHandler = async (request, response) => {
@@ -59,13 +69,16 @@ export const getOrder: RequestHandler = async (request, response) => {
 };
 
 export const paypalWebhook: RequestHandler = async (request, response) => {
-  await service.processPayPalWebhook({
-    "paypal-auth-algo": request.get("paypal-auth-algo"),
-    "paypal-cert-url": request.get("paypal-cert-url"),
-    "paypal-transmission-id": request.get("paypal-transmission-id"),
-    "paypal-transmission-sig": request.get("paypal-transmission-sig"),
-    "paypal-transmission-time": request.get("paypal-transmission-time")
-  }, request.body);
+  await service.processPayPalWebhook(
+    {
+      "paypal-auth-algo": request.get("paypal-auth-algo"),
+      "paypal-cert-url": request.get("paypal-cert-url"),
+      "paypal-transmission-id": request.get("paypal-transmission-id"),
+      "paypal-transmission-sig": request.get("paypal-transmission-sig"),
+      "paypal-transmission-time": request.get("paypal-transmission-time"),
+    },
+    request.body,
+  );
   response.status(200).json({ received: true });
 };
 

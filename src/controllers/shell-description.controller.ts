@@ -1,13 +1,20 @@
 import type { RequestHandler } from "express";
 import { parseOrThrow, throwNotFound } from "./shared";
 import { uuidSchema } from "../validation/common";
-import { listShellDescriptionsSchema, createShellDescriptionSchema, updateShellDescriptionSchema } from "../validation/shell-description";
+import {
+  listShellDescriptionsSchema,
+  createShellDescriptionSchema,
+  updateShellDescriptionSchema,
+} from "../validation/shell-description";
 import * as service from "../services/shell-description.service";
 
 export const list: RequestHandler = async (request, response) => {
   const query = parseOrThrow(listShellDescriptionsSchema, request.query, "query parameters");
   const result = await service.listShellDescriptions(query);
-  response.json({ data: result.data, pagination: { limit: query.limit, offset: query.offset, total: result.total } });
+  response.json({
+    data: result.data,
+    pagination: { limit: query.limit, offset: query.offset, total: result.total },
+  });
 };
 
 export const get: RequestHandler = async (request, response) => {

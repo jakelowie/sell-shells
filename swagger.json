@@ -45,14 +45,15 @@
     },
     {
       "name": "Guest commerce"
+    },
+    {
+      "name": "Commerce features"
     }
   ],
   "paths": {
     "/api/shells": {
       "get": {
-        "tags": [
-          "Shell descriptions"
-        ],
+        "tags": ["Shell descriptions"],
         "operationId": "listShellDescriptions",
         "summary": "List shell descriptions",
         "parameters": [
@@ -105,10 +106,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -157,10 +155,7 @@
             "description": "Include soft-deleted records.",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ],
+              "enum": ["true", "false"],
               "default": "false"
             }
           },
@@ -200,10 +195,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -242,9 +234,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Shell descriptions"
-        ],
+        "tags": ["Shell descriptions"],
         "operationId": "createShellDescription",
         "summary": "Create shell descriptions",
         "requestBody": {
@@ -264,9 +254,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellDescription"
@@ -328,9 +316,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Shell descriptions"
-        ],
+        "tags": ["Shell descriptions"],
         "operationId": "getShellDescription",
         "summary": "Get shell descriptions by ID",
         "responses": {
@@ -340,9 +326,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellDescription"
@@ -385,9 +369,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Shell descriptions"
-        ],
+        "tags": ["Shell descriptions"],
         "operationId": "updateShellDescription",
         "summary": "Update shell descriptions",
         "requestBody": {
@@ -407,9 +389,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellDescription"
@@ -467,9 +447,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Shell descriptions"
-        ],
+        "tags": ["Shell descriptions"],
         "operationId": "deleteShellDescription",
         "summary": "Delete shell descriptions",
         "description": "Soft-deletes the record by setting is_deleted=true.",
@@ -480,9 +458,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellDescription"
@@ -542,9 +518,7 @@
     },
     "/api/shell-stock-types": {
       "get": {
-        "tags": [
-          "Shell stock types"
-        ],
+        "tags": ["Shell stock types"],
         "operationId": "listShellStockTypes",
         "summary": "List shell stock types",
         "parameters": [
@@ -578,10 +552,7 @@
             "description": "Column used to sort the result.",
             "schema": {
               "type": "string",
-              "enum": [
-                "created_at",
-                "stock_name"
-              ],
+              "enum": ["created_at", "stock_name"],
               "default": "created_at"
             }
           },
@@ -592,10 +563,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -616,10 +584,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -663,9 +628,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "Shell stock types"
-        ],
+        "tags": ["Shell stock types"],
         "operationId": "createShellStockType",
         "summary": "Create shell stock types",
         "requestBody": {
@@ -685,9 +648,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellStockType"
@@ -749,9 +710,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Shell stock types"
-        ],
+        "tags": ["Shell stock types"],
         "operationId": "getShellStockType",
         "summary": "Get shell stock types by ID",
         "responses": {
@@ -761,9 +720,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellStockType"
@@ -811,9 +768,7 @@
         ]
       },
       "patch": {
-        "tags": [
-          "Shell stock types"
-        ],
+        "tags": ["Shell stock types"],
         "operationId": "updateShellStockType",
         "summary": "Update shell stock types",
         "requestBody": {
@@ -833,9 +788,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellStockType"
@@ -893,9 +846,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Shell stock types"
-        ],
+        "tags": ["Shell stock types"],
         "operationId": "deleteShellStockType",
         "summary": "Delete shell stock types",
         "description": "Returns 409 if referenced by a shell_stocks_info row.",
@@ -906,9 +857,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellStockType"
@@ -968,9 +917,7 @@
     },
     "/api/stock-info": {
       "get": {
-        "tags": [
-          "Shell stocks info"
-        ],
+        "tags": ["Shell stocks info"],
         "operationId": "listShellStocksInfos",
         "summary": "List shell stocks info records (legacy alias)",
         "parameters": [
@@ -1021,10 +968,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -1056,10 +1000,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -1104,9 +1045,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "Shell stocks info"
-        ],
+        "tags": ["Shell stocks info"],
         "operationId": "createShellStocksInfo",
         "summary": "Create shell stocks info records (legacy alias)",
         "requestBody": {
@@ -1126,9 +1065,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -1191,9 +1128,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Stock information"
-        ],
+        "tags": ["Stock information"],
         "operationId": "getShellStocksInfo",
         "summary": "Get shell stocks info records by ID",
         "responses": {
@@ -1203,9 +1138,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -1253,9 +1186,7 @@
         ]
       },
       "patch": {
-        "tags": [
-          "Stock information"
-        ],
+        "tags": ["Stock information"],
         "operationId": "updateShellStocksInfo",
         "summary": "Update shell stocks info records",
         "requestBody": {
@@ -1275,9 +1206,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -1335,9 +1264,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Stock information"
-        ],
+        "tags": ["Stock information"],
         "operationId": "deleteShellStocksInfo",
         "summary": "Delete shell stocks info records",
         "responses": {
@@ -1347,9 +1274,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -1409,9 +1334,7 @@
     },
     "/api/shell-images": {
       "get": {
-        "tags": [
-          "Shell images"
-        ],
+        "tags": ["Shell images"],
         "operationId": "listShellImages",
         "summary": "List shell images",
         "parameters": [
@@ -1445,11 +1368,7 @@
             "description": "Column used to sort the result.",
             "schema": {
               "type": "string",
-              "enum": [
-                "created_at",
-                "file_name",
-                "is_main_image"
-              ],
+              "enum": ["created_at", "file_name", "is_main_image"],
               "default": "created_at"
             }
           },
@@ -1460,10 +1379,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -1493,10 +1409,7 @@
             "description": "Filter main image flag.",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -1507,10 +1420,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -1549,9 +1459,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Shell images"
-        ],
+        "tags": ["Shell images"],
         "operationId": "createShellImage",
         "summary": "Upload a shell image",
         "requestBody": {
@@ -1576,9 +1484,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellImage"
@@ -1660,9 +1566,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Shell images"
-        ],
+        "tags": ["Shell images"],
         "operationId": "getShellImage",
         "summary": "Get shell images by ID",
         "responses": {
@@ -1672,9 +1576,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellImage"
@@ -1717,9 +1619,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Shell images"
-        ],
+        "tags": ["Shell images"],
         "operationId": "updateShellImage",
         "summary": "Update shell images",
         "requestBody": {
@@ -1739,9 +1639,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellImage"
@@ -1799,9 +1697,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Shell images"
-        ],
+        "tags": ["Shell images"],
         "operationId": "deleteShellImage",
         "summary": "Delete shell images",
         "responses": {
@@ -1811,9 +1707,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellImageRecord"
@@ -1883,9 +1777,7 @@
     },
     "/health": {
       "get": {
-        "tags": [
-          "System"
-        ],
+        "tags": ["System"],
         "operationId": "healthCheck",
         "summary": "Health check",
         "responses": {
@@ -1895,15 +1787,11 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "status"
-                  ],
+                  "required": ["status"],
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": [
-                        "ok"
-                      ]
+                      "enum": ["ok"]
                     }
                   }
                 }
@@ -1915,9 +1803,7 @@
     },
     "/api/table/columns/{tablename}": {
       "get": {
-        "tags": [
-          "Database metadata"
-        ],
+        "tags": ["Database metadata"],
         "operationId": "getTableColumns",
         "summary": "Get exposed table columns",
         "description": "Requires SUPABASE_URL and SUPABASE_SECRET_KEY on the API server.",
@@ -1939,10 +1825,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "table",
-                    "columns"
-                  ],
+                  "required": ["table", "columns"],
                   "properties": {
                     "table": {
                       "type": "string"
@@ -2008,9 +1891,7 @@
     },
     "/api/shell-stocks-info": {
       "get": {
-        "tags": [
-          "Shell stocks info"
-        ],
+        "tags": ["Shell stocks info"],
         "operationId": "listShellStocksInfos",
         "summary": "List shell stocks info records",
         "parameters": [
@@ -2061,10 +1942,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -2096,10 +1974,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -2143,9 +2018,7 @@
         ]
       },
       "post": {
-        "tags": [
-          "Shell stocks info"
-        ],
+        "tags": ["Shell stocks info"],
         "operationId": "createShellStocksInfo",
         "summary": "Create shell stocks info records",
         "requestBody": {
@@ -2165,9 +2038,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -2229,9 +2100,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Stock information"
-        ],
+        "tags": ["Stock information"],
         "operationId": "getShellStocksInfo",
         "summary": "Get shell stocks info records by ID",
         "responses": {
@@ -2241,9 +2110,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -2291,9 +2158,7 @@
         ]
       },
       "patch": {
-        "tags": [
-          "Stock information"
-        ],
+        "tags": ["Stock information"],
         "operationId": "updateShellStocksInfo",
         "summary": "Update shell stocks info records",
         "requestBody": {
@@ -2313,9 +2178,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -2373,9 +2236,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Stock information"
-        ],
+        "tags": ["Stock information"],
         "operationId": "deleteShellStocksInfo",
         "summary": "Delete shell stocks info records",
         "responses": {
@@ -2385,9 +2246,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/StockInfo"
@@ -2447,9 +2306,7 @@
     },
     "/api/shell-types": {
       "get": {
-        "tags": [
-          "Shell types"
-        ],
+        "tags": ["Shell types"],
         "operationId": "listShellTypes",
         "summary": "List shell types",
         "parameters": [
@@ -2483,10 +2340,7 @@
             "description": "Column used to sort the result.",
             "schema": {
               "type": "string",
-              "enum": [
-                "created_at",
-                "shell_type_name"
-              ],
+              "enum": ["created_at", "shell_type_name"],
               "default": "created_at"
             }
           },
@@ -2497,10 +2351,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -2521,10 +2372,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -2563,9 +2411,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Shell types"
-        ],
+        "tags": ["Shell types"],
         "operationId": "createShellType",
         "summary": "Create shell types",
         "requestBody": {
@@ -2585,9 +2431,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellType"
@@ -2649,9 +2493,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Shell types"
-        ],
+        "tags": ["Shell types"],
         "operationId": "getShellType",
         "summary": "Get shell types by ID",
         "responses": {
@@ -2661,9 +2503,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellType"
@@ -2706,9 +2546,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Shell types"
-        ],
+        "tags": ["Shell types"],
         "operationId": "updateShellType",
         "summary": "Update shell types",
         "requestBody": {
@@ -2728,9 +2566,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellType"
@@ -2788,9 +2624,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Shell types"
-        ],
+        "tags": ["Shell types"],
         "operationId": "deleteShellType",
         "summary": "Delete shell types",
         "description": "Returns 409 if referenced by a shell_stocks_info row.",
@@ -2801,9 +2635,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellType"
@@ -2863,9 +2695,7 @@
     },
     "/api/auth/me": {
       "get": {
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "operationId": "getCurrentAccount",
         "summary": "Get current account and current database role",
         "security": [
@@ -2880,9 +2710,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AuthenticatedAccount"
@@ -2906,9 +2734,7 @@
     },
     "/api/auth/users": {
       "get": {
-        "tags": [
-          "Role management"
-        ],
+        "tags": ["Role management"],
         "operationId": "listUserRoles",
         "summary": "List registered accounts and roles",
         "description": "Superadmin only. Lists role records synchronized with Supabase Auth users.",
@@ -2924,9 +2750,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -2950,9 +2774,7 @@
     },
     "/api/auth/users/{userId}/role": {
       "patch": {
-        "tags": [
-          "Role management"
-        ],
+        "tags": ["Role management"],
         "operationId": "assignUserRole",
         "summary": "Assign a role to another account",
         "description": "Superadmin only. The current account cannot change its own role. The last superadmin cannot be demoted.",
@@ -2990,9 +2812,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/UserRole"
@@ -3022,9 +2842,7 @@
     },
     "/api/shell-localities": {
       "get": {
-        "tags": [
-          "Shell localities"
-        ],
+        "tags": ["Shell localities"],
         "operationId": "listShellLocalities",
         "summary": "List shell localitys",
         "parameters": [
@@ -3058,10 +2876,7 @@
             "description": "Column used to sort the result.",
             "schema": {
               "type": "string",
-              "enum": [
-                "created_at",
-                "locality"
-              ],
+              "enum": ["created_at", "locality"],
               "default": "locality"
             }
           },
@@ -3072,10 +2887,7 @@
             "description": "Sort direction.",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -3105,10 +2917,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data",
-                    "pagination"
-                  ],
+                  "required": ["data", "pagination"],
                   "properties": {
                     "data": {
                       "type": "array",
@@ -3147,9 +2956,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Shell localities"
-        ],
+        "tags": ["Shell localities"],
         "operationId": "createShellLocality",
         "summary": "Create shell localitys",
         "requestBody": {
@@ -3169,9 +2976,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellLocality"
@@ -3233,9 +3038,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Shell localities"
-        ],
+        "tags": ["Shell localities"],
         "operationId": "getShellLocality",
         "summary": "Get shell localitys by ID",
         "responses": {
@@ -3245,9 +3048,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellLocality"
@@ -3290,9 +3091,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Shell localities"
-        ],
+        "tags": ["Shell localities"],
         "operationId": "updateShellLocality",
         "summary": "Update shell localitys",
         "requestBody": {
@@ -3312,9 +3111,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellLocality"
@@ -3372,9 +3169,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "Shell localities"
-        ],
+        "tags": ["Shell localities"],
         "operationId": "deleteShellLocality",
         "summary": "Delete shell localitys",
         "description": "Returns 409 if referenced by a shell_stocks_info row.",
@@ -3385,9 +3180,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ShellLocality"
@@ -3447,9 +3240,7 @@
     },
     "/api/shop/config": {
       "get": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Read public checkout configuration",
         "responses": {
           "200": {
@@ -3460,9 +3251,7 @@
     },
     "/api/shop/sessions": {
       "post": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Create a guest shopping session",
         "responses": {
           "201": {
@@ -3483,9 +3272,7 @@
     },
     "/api/shop/availability": {
       "get": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Get current availability for up to 100 shells",
         "parameters": [
           {
@@ -3510,9 +3297,7 @@
     },
     "/api/shop/cart": {
       "get": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Get this guest sessions cart",
         "security": [
           {
@@ -3565,9 +3350,7 @@
     },
     "/api/shop/cart/items": {
       "post": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Add quantity of a shell to the cart",
         "security": [
           {
@@ -3617,9 +3400,7 @@
         }
       ],
       "put": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Set the quantity of a cart item",
         "security": [
           {
@@ -3632,9 +3413,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "quantity"
-                ],
+                "required": ["quantity"],
                 "properties": {
                   "quantity": {
                     "type": "integer",
@@ -3693,9 +3472,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Remove a cart item",
         "security": [
           {
@@ -3748,9 +3525,7 @@
     },
     "/api/shop/orders": {
       "get": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "List orders owned by this guest session",
         "security": [
           {
@@ -3822,11 +3597,29 @@
         }
       },
       "post": {
-        "tags": [
-          "Guest commerce"
-        ],
-        "summary": "Validate cart and create a PayPal order",
-        "description": "The server calculates prices and totals from Supabase, reserves available stock for 30 minutes and returns the PayPal order ID. Requires configured currency and server credentials.",
+        "summary": "Create a checkout with server-verified discount and shipping pricing",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
         "security": [
           {
             "shopSession": []
@@ -3837,39 +3630,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ShopCheckoutRequest"
-              },
-              "example": {
-                "idempotency_key": "22222222-2222-4222-8222-222222222222",
-                "customer": {
-                  "name": "Taylor Shell",
-                  "email": "taylor@example.com",
-                  "phone": "+1 555 555 0100"
-                },
-                "delivery_address": {
-                  "street_address": "12 Shore Road",
-                  "city": "Cebu City",
-                  "province": "Cebu",
-                  "postal_code": "6000",
-                  "country": "Philippines",
-                  "address_details": "Leave at reception"
-                }
+                "type": "object",
+                "additionalProperties": true
               }
             }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Persisted order and PayPal order ID."
-          },
-          "400": {
-            "description": "Invalid checkout details."
-          },
-          "409": {
-            "description": "Cart stock changed or PayPal rejected the order."
-          },
-          "503": {
-            "description": "PayPal or currency configuration is missing."
           }
         }
       }
@@ -3887,9 +3651,7 @@
         }
       ],
       "get": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Get owned order and invoice data",
         "security": [
           {
@@ -3953,9 +3715,7 @@
         }
       ],
       "post": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Capture and verify a PayPal payment",
         "security": [
           {
@@ -3977,9 +3737,7 @@
     },
     "/api/shop/paypal/webhook": {
       "post": {
-        "tags": [
-          "Guest commerce"
-        ],
+        "tags": ["Guest commerce"],
         "summary": "Receive verified PayPal events",
         "description": "PayPal verifies the transmission signature server-side before event reconciliation.",
         "requestBody": {
@@ -4007,9 +3765,7 @@
     },
     "/api/admin/orders": {
       "get": {
-        "tags": [
-          "Admin Orders"
-        ],
+        "tags": ["Admin Orders"],
         "summary": "List customer orders for staff",
         "description": "Requires an authenticated admin or superadmin Supabase user.",
         "security": [
@@ -4053,9 +3809,7 @@
     },
     "/api/admin/orders/{orderId}": {
       "get": {
-        "tags": [
-          "Admin Orders"
-        ],
+        "tags": ["Admin Orders"],
         "summary": "Get an order with customer, delivery, and item details",
         "description": "Requires an authenticated admin or superadmin Supabase user.",
         "security": [
@@ -4089,15 +3843,1535 @@
           }
         }
       }
+    },
+    "/api/customer/contact": {
+      "post": {
+        "summary": "Submit a customer inquiry",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/customer/settings": {
+      "get": {
+        "summary": "Read configured public store information",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/customer/shipping": {
+      "get": {
+        "summary": "List active shipping rates for a destination",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/customer/feedback": {
+      "post": {
+        "summary": "Submit order feedback",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List paginated feedback for this guest session",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ]
+      }
+    },
+    "/api/customer/discounts/validate": {
+      "post": {
+        "summary": "Preview a discount code",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/customer/returns": {
+      "post": {
+        "summary": "Submit a return request",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List this session’s return requests",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ]
+      }
+    },
+    "/api/customer/returns/{returnId}/evidence": {
+      "post": {
+        "summary": "Upload return evidence image (maximum 5 MB)",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "returnId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "get": {
+        "summary": "List signed links for owned return evidence",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "returnId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/customer/invoices": {
+      "post": {
+        "summary": "Request an invoice for an owned order",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List invoice requests and generated snapshots",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "shopSession": []
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/feedback": {
+      "get": {
+        "summary": "Paginate feedback records",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/inquiries": {
+      "get": {
+        "summary": "Paginate contact inquiries",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/returns": {
+      "get": {
+        "summary": "Paginate return requests",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/returns/{id}": {
+      "patch": {
+        "summary": "Review and transition a return request",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/returns/{id}/history": {
+      "get": {
+        "summary": "Read return status history",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/returns/{id}/evidence": {
+      "get": {
+        "summary": "Read signed return evidence links",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/invoices": {
+      "get": {
+        "summary": "Paginate invoice requests",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/invoices/{id}": {
+      "patch": {
+        "summary": "Review an invoice request",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/invoices/{id}/generate": {
+      "post": {
+        "summary": "Generate immutable invoice snapshot",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/orders/{id}/status": {
+      "patch": {
+        "summary": "Update fulfillment status and audit history",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/orders/{id}/history": {
+      "get": {
+        "summary": "Read fulfillment status history",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/discounts": {
+      "get": {
+        "summary": "GET discounts",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "POST discounts",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/commerce/discounts/{id}": {
+      "patch": {
+        "summary": "PATCH {id}",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "DELETE {id}",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/shipping/couriers": {
+      "get": {
+        "summary": "GET couriers",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "POST couriers",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/commerce/shipping/couriers/{id}": {
+      "patch": {
+        "summary": "PATCH {id}",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/shipping/services": {
+      "get": {
+        "summary": "GET services",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "POST services",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/commerce/shipping/services/{id}": {
+      "patch": {
+        "summary": "PATCH {id}",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/shipping/rates": {
+      "get": {
+        "summary": "GET rates",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "POST rates",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/commerce/shipping/rates/{id}": {
+      "patch": {
+        "summary": "PATCH {id}",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/commerce/settings": {
+      "get": {
+        "summary": "GET settings",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "PATCH settings",
+        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "tags": ["Commerce features"],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Validation or business-rule error"
+          },
+          "401": {
+            "description": "Authentication or guest session required"
+          },
+          "403": {
+            "description": "Insufficient role"
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "ErrorResponse": {
         "type": "object",
-        "required": [
-          "error"
-        ],
+        "required": ["error"],
         "properties": {
           "error": {
             "type": "string"
@@ -4137,11 +5411,7 @@
       },
       "Pagination": {
         "type": "object",
-        "required": [
-          "limit",
-          "offset",
-          "total"
-        ],
+        "required": ["limit", "offset", "total"],
         "properties": {
           "limit": {
             "type": "integer"
@@ -4177,83 +5447,47 @@
             "format": "date-time"
           },
           "shell_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "author": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "deepness": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "note": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "is_deleted": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "shell_id": {
             "type": "string",
             "format": "uuid"
           },
           "shell_stock_type_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_type_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "price": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "locality_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_weight": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "shell_size": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4266,83 +5500,47 @@
             "format": "date-time"
           },
           "shell_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "author": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "deepness": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "note": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "is_deleted": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "shell_id": {
             "type": "string",
             "format": "uuid"
           },
           "shell_stock_type_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_type_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "price": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "locality_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_weight": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "shell_size": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4356,11 +5554,7 @@
       },
       "ShellStockType": {
         "type": "object",
-        "required": [
-          "stock_id",
-          "created_at",
-          "stock_name"
-        ],
+        "required": ["stock_id", "created_at", "stock_name"],
         "properties": {
           "stock_id": {
             "type": "string",
@@ -4371,10 +5565,7 @@
             "format": "date-time"
           },
           "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4391,10 +5582,7 @@
             "format": "date-time"
           },
           "stock_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4423,40 +5611,25 @@
             "format": "date-time"
           },
           "shell_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_stock_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_stock": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "shell_pcs_per_stock": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "stock_info_id": {
             "type": "integer",
             "format": "int64"
           },
           "shell_total_available": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           }
         }
       },
@@ -4469,40 +5642,25 @@
             "format": "date-time"
           },
           "shell_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_stock_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "shell_stock": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "shell_pcs_per_stock": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           },
           "stock_info_id": {
             "type": "integer",
             "format": "int64"
           },
           "shell_total_available": {
-            "type": [
-              "number",
-              "null"
-            ]
+            "type": ["number", "null"]
           }
         }
       },
@@ -4532,42 +5690,24 @@
             "format": "date-time"
           },
           "file_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "storage_path": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "shell_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "is_main_image": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "image_url": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uri"
           },
           "image_url_expires_at": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "image_id": {
@@ -4579,9 +5719,7 @@
       "ShellImageUpload": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "image"
-        ],
+        "required": ["image"],
         "properties": {
           "image": {
             "type": "string",
@@ -4589,17 +5727,11 @@
             "description": "JPEG, PNG, WebP, or GIF; maximum size 5 MB."
           },
           "shell_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "is_main_image": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           }
         }
       },
@@ -4609,33 +5741,20 @@
         "minProperties": 1,
         "properties": {
           "file_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "shell_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "is_main_image": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           }
         }
       },
       "TableColumn": {
         "type": "object",
-        "required": [
-          "name",
-          "dataType",
-          "nullable"
-        ],
+        "required": ["name", "dataType", "nullable"],
         "properties": {
           "name": {
             "type": "string"
@@ -4644,10 +5763,7 @@
             "type": "string"
           },
           "nullable": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           }
         }
       },
@@ -4667,29 +5783,17 @@
             "format": "date-time"
           },
           "file_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "storage_path": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "shell_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "uuid"
           },
           "is_main_image": {
-            "type": [
-              "boolean",
-              "null"
-            ]
+            "type": ["boolean", "null"]
           },
           "image_id": {
             "type": "string",
@@ -4699,11 +5803,7 @@
       },
       "ShellType": {
         "type": "object",
-        "required": [
-          "type_id",
-          "created_at",
-          "shell_type_name"
-        ],
+        "required": ["type_id", "created_at", "shell_type_name"],
         "properties": {
           "type_id": {
             "type": "string",
@@ -4714,10 +5814,7 @@
             "format": "date-time"
           },
           "shell_type_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4734,10 +5831,7 @@
             "format": "date-time"
           },
           "shell_type_name": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4751,29 +5845,18 @@
       },
       "AppRole": {
         "type": "string",
-        "enum": [
-          "user",
-          "admin",
-          "superadmin"
-        ]
+        "enum": ["user", "admin", "superadmin"]
       },
       "AuthenticatedAccount": {
         "type": "object",
-        "required": [
-          "id",
-          "email",
-          "role"
-        ],
+        "required": ["id", "email", "role"],
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
           "email": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "email"
           },
           "role": {
@@ -4783,23 +5866,14 @@
       },
       "UserRole": {
         "type": "object",
-        "required": [
-          "user_id",
-          "email",
-          "role",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["user_id", "email", "role", "created_at", "updated_at"],
         "properties": {
           "user_id": {
             "type": "string",
             "format": "uuid"
           },
           "email": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "email"
           },
           "role": {
@@ -4818,9 +5892,7 @@
       "RoleAssignment": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "role"
-        ],
+        "required": ["role"],
         "properties": {
           "role": {
             "$ref": "#/components/schemas/AppRole"
@@ -4829,11 +5901,7 @@
       },
       "ShellLocality": {
         "type": "object",
-        "required": [
-          "locality_id",
-          "created_at",
-          "locality"
-        ],
+        "required": ["locality_id", "created_at", "locality"],
         "properties": {
           "locality_id": {
             "type": "string",
@@ -4844,10 +5912,7 @@
             "format": "date-time"
           },
           "locality": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4864,10 +5929,7 @@
             "format": "date-time"
           },
           "locality": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           }
         }
       },
@@ -4882,13 +5944,7 @@
       "ShopDeliveryAddress": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "street_address",
-          "city",
-          "province",
-          "postal_code",
-          "country"
-        ],
+        "required": ["street_address", "city", "province", "postal_code", "country"],
         "properties": {
           "street_address": {
             "type": "string",
@@ -4924,11 +5980,7 @@
       "ShopCheckoutRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "idempotency_key",
-          "customer",
-          "delivery_address"
-        ],
+        "required": ["idempotency_key", "customer", "delivery_address"],
         "properties": {
           "idempotency_key": {
             "type": "string",
@@ -4937,11 +5989,7 @@
           "customer": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "name",
-              "email",
-              "phone"
-            ],
+            "required": ["name", "email", "phone"],
             "properties": {
               "name": {
                 "type": "string",
@@ -4967,10 +6015,7 @@
       },
       "ShopCartItem": {
         "type": "object",
-        "required": [
-          "shell_id",
-          "quantity"
-        ],
+        "required": ["shell_id", "quantity"],
         "properties": {
           "shell_id": {
             "type": "string",
@@ -4988,10 +6033,7 @@
         "properties": {
           "data": {
             "type": "object",
-            "required": [
-              "session_id",
-              "token"
-            ],
+            "required": ["session_id", "token"],
             "properties": {
               "session_id": {
                 "type": "string",

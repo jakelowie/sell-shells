@@ -1,7 +1,11 @@
 import type { RequestHandler } from "express";
 import { ApiError } from "../errors/api-error";
 import type { AppRole } from "../models/database";
-import { createUserSupabaseClient, getSupabaseClient, runWithUserSupabaseClient } from "../config/supabase";
+import {
+  createUserSupabaseClient,
+  getSupabaseClient,
+  runWithUserSupabaseClient,
+} from "../config/supabase";
 
 const validRoles = new Set<AppRole>(["user", "admin", "superadmin"]);
 
@@ -34,7 +38,12 @@ export const authenticate: RequestHandler = async (request, _response, next) => 
       return;
     }
     if (!roleRecord || !validRoles.has(roleRecord.role)) {
-      next(new ApiError(403, "Your account does not have a valid application role. Contact an administrator."));
+      next(
+        new ApiError(
+          403,
+          "Your account does not have a valid application role. Contact an administrator.",
+        ),
+      );
       return;
     }
 

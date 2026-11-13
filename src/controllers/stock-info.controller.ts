@@ -1,15 +1,26 @@
 import type { RequestHandler } from "express";
 import { z } from "zod";
 import { parseOrThrow, throwNotFound } from "./shared";
-import { listStockInfoSchema, createStockInfoSchema, updateStockInfoSchema } from "../validation/stock-info";
+import {
+  listStockInfoSchema,
+  createStockInfoSchema,
+  updateStockInfoSchema,
+} from "../validation/stock-info";
 import * as service from "../services/stock-info.service";
 
-const stockInfoIdSchema = z.string().regex(/^-?\d+$/).refine((value) => Number.isSafeInteger(Number(value))).transform(Number);
+const stockInfoIdSchema = z
+  .string()
+  .regex(/^-?\d+$/)
+  .refine((value) => Number.isSafeInteger(Number(value)))
+  .transform(Number);
 
 export const list: RequestHandler = async (request, response) => {
   const query = parseOrThrow(listStockInfoSchema, request.query, "query parameters");
   const result = await service.listStockInfo(query);
-  response.json({ data: result.data, pagination: { limit: query.limit, offset: query.offset, total: result.total } });
+  response.json({
+    data: result.data,
+    pagination: { limit: query.limit, offset: query.offset, total: result.total },
+  });
 };
 
 export const get: RequestHandler = async (request, response) => {

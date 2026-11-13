@@ -26,3 +26,12 @@ export const requireShopSession: RequestHandler = async (request, _response, nex
     next(error);
   }
 };
+
+/** Resolves a supplied guest token while still allowing anonymous inquiries. */
+export const optionalShopSession: RequestHandler = async (request, _response, next) => {
+  if (!request.get("X-Shop-Token")) {
+    next();
+    return;
+  }
+  await requireShopSession(request, _response, next);
+};

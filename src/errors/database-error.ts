@@ -5,7 +5,7 @@ export class DatabaseOperationError extends Error {
     readonly code: string,
     readonly databaseMessage = "Database returned no record.",
     readonly details: string | null = null,
-    readonly hint: string | null = null
+    readonly hint: string | null = null,
   ) {
     super("Database operation failed");
     this.name = "DatabaseOperationError";

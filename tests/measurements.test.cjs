@@ -4,10 +4,23 @@ const { createShellDescriptionSchema } = require("../dist/validation/shell-descr
 const { unitSchema } = require("../dist/validation/unit.js");
 
 test("shell measurements accept descriptive text and reject numeric-only weight input", () => {
-  assert.equal(createShellDescriptionSchema.safeParse({ shell_size: "5–7 cm", shell_weight: "approximately 20 g" }).success, true);
-  assert.equal(createShellDescriptionSchema.safeParse({ shell_size: "2 × 4", shell_weight: "20 ounces" }).success, true);
+  assert.equal(
+    createShellDescriptionSchema.safeParse({
+      shell_size: "5–7 cm",
+      shell_weight: "approximately 20 g",
+    }).success,
+    true,
+  );
+  assert.equal(
+    createShellDescriptionSchema.safeParse({ shell_size: "2 × 4", shell_weight: "20 ounces" })
+      .success,
+    true,
+  );
   assert.equal(createShellDescriptionSchema.safeParse({ shell_weight: 20 }).success, false);
-  assert.equal(createShellDescriptionSchema.safeParse({ shell_size: "x".repeat(121) }).success, false);
+  assert.equal(
+    createShellDescriptionSchema.safeParse({ shell_size: "x".repeat(121) }).success,
+    false,
+  );
 });
 
 test("measurement units use the canonical size and weight categories", () => {

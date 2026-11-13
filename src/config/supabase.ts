@@ -18,15 +18,15 @@ export function getSupabaseClient(): SupabaseClient<Database> {
 
   if (!url || !key) {
     throw new Error(
-      "Supabase is not configured. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your .env file."
+      "Supabase is not configured. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your .env file.",
     );
   }
 
   client = createClient<Database>(url, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 
   return client;
@@ -37,16 +37,21 @@ export function createUserSupabaseClient(accessToken: string): SupabaseClient<Da
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) {
-    throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your .env file.");
+    throw new Error(
+      "Supabase is not configured. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your .env file.",
+    );
   }
   return createClient<Database>(url, key, {
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 }
 
 /** Keeps concurrent Express requests isolated while existing services use the shared accessor. */
-export function runWithUserSupabaseClient(client: SupabaseClient<Database>, callback: () => void): void {
+export function runWithUserSupabaseClient(
+  client: SupabaseClient<Database>,
+  callback: () => void,
+): void {
   requestClient.run(client, callback);
 }
 
@@ -57,11 +62,13 @@ export function getSupabaseStorageClient(): SupabaseClient<Database> {
   const url = process.env.SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!url || !secretKey) {
-    throw new Error("Supabase Storage is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY in .env.");
+    throw new Error(
+      "Supabase Storage is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY in .env.",
+    );
   }
 
   storageClient = createClient<Database>(url, secretKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { autoRefreshToken: false, persistSession: false },
   });
   return storageClient;
 }
@@ -73,11 +80,13 @@ export function getSupabaseCommerceClient(): SupabaseClient<Database> {
   const url = process.env.SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   if (!url || !secretKey) {
-    throw new Error("Supabase commerce is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY in .env.");
+    throw new Error(
+      "Supabase commerce is not configured. Set SUPABASE_URL and SUPABASE_SECRET_KEY in .env.",
+    );
   }
 
   commerceClient = createClient<Database>(url, secretKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { autoRefreshToken: false, persistSession: false },
   });
   return commerceClient;
 }

@@ -1,37 +1,67 @@
-import { list, record } from './client';
-import type { Shell, ShellImage, ShellLocality, ShellType } from './types';
+import { list, record } from "./client";
+import type { Shell, ShellImage, ShellLocality, ShellType } from "./types";
 
 const PAGE_SIZE = 100;
 
 export async function getShellTypes() {
-  const firstPage = await list<ShellType>('/api/shell-types', {
-    limit: PAGE_SIZE, offset: 0, sort_by: 'shell_type_name', sort_order: 'asc',
+  const firstPage = await list<ShellType>("/api/shell-types", {
+    limit: PAGE_SIZE,
+    offset: 0,
+    sort_by: "shell_type_name",
+    sort_order: "asc",
   });
-  const pageCount = Math.ceil(Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE);
-  const remainingPages = await Promise.all(
-    Array.from({ length: pageCount }, (_, index) => list<ShellType>('/api/shell-types', {
-      limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'shell_type_name', sort_order: 'asc',
-    })),
+  const pageCount = Math.ceil(
+    Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE,
   );
-  return { ...firstPage, data: [...firstPage.data, ...remainingPages.flatMap(page => page.data)] };
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) =>
+      list<ShellType>("/api/shell-types", {
+        limit: PAGE_SIZE,
+        offset: (index + 1) * PAGE_SIZE,
+        sort_by: "shell_type_name",
+        sort_order: "asc",
+      }),
+    ),
+  );
+  return {
+    ...firstPage,
+    data: [...firstPage.data, ...remainingPages.flatMap((page) => page.data)],
+  };
 }
 
 export async function getShellLocalities() {
-  const firstPage = await list<ShellLocality>('/api/shell-localities', {
-    limit: PAGE_SIZE, offset: 0, sort_by: 'locality', sort_order: 'asc',
+  const firstPage = await list<ShellLocality>("/api/shell-localities", {
+    limit: PAGE_SIZE,
+    offset: 0,
+    sort_by: "locality",
+    sort_order: "asc",
   });
-  const pageCount = Math.ceil(Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE);
-  const remainingPages = await Promise.all(
-    Array.from({ length: pageCount }, (_, index) => list<ShellLocality>('/api/shell-localities', {
-      limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'locality', sort_order: 'asc',
-    })),
+  const pageCount = Math.ceil(
+    Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE,
   );
-  return { ...firstPage, data: [...firstPage.data, ...remainingPages.flatMap(page => page.data)] };
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) =>
+      list<ShellLocality>("/api/shell-localities", {
+        limit: PAGE_SIZE,
+        offset: (index + 1) * PAGE_SIZE,
+        sort_by: "locality",
+        sort_order: "asc",
+      }),
+    ),
+  );
+  return {
+    ...firstPage,
+    data: [...firstPage.data, ...remainingPages.flatMap((page) => page.data)],
+  };
 }
 
 export function getShellsForType(typeId: string, offset: number, limit: number) {
-  return list<Shell>('/api/shells', {
-    shell_type_id: typeId, limit, offset, sort_by: 'shell_name', sort_order: 'asc',
+  return list<Shell>("/api/shells", {
+    shell_type_id: typeId,
+    limit,
+    offset,
+    sort_by: "shell_name",
+    sort_order: "asc",
   });
 }
 
@@ -40,33 +70,56 @@ export function getShellById(shellId: string) {
 }
 
 export async function getAllImagesForShell(shellId: string) {
-  const firstPage = await list<ShellImage>('/api/shell-images', {
-    shell_id: shellId, limit: PAGE_SIZE, offset: 0, sort_by: 'created_at', sort_order: 'desc',
+  const firstPage = await list<ShellImage>("/api/shell-images", {
+    shell_id: shellId,
+    limit: PAGE_SIZE,
+    offset: 0,
+    sort_by: "created_at",
+    sort_order: "desc",
   });
-  const pageCount = Math.ceil(Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE);
-  const remainingPages = await Promise.all(
-    Array.from({ length: pageCount }, (_, index) => list<ShellImage>('/api/shell-images', {
-      shell_id: shellId, limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'created_at', sort_order: 'desc',
-    })),
+  const pageCount = Math.ceil(
+    Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE,
   );
-  return [...firstPage.data, ...remainingPages.flatMap(page => page.data)];
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) =>
+      list<ShellImage>("/api/shell-images", {
+        shell_id: shellId,
+        limit: PAGE_SIZE,
+        offset: (index + 1) * PAGE_SIZE,
+        sort_by: "created_at",
+        sort_order: "desc",
+      }),
+    ),
+  );
+  return [...firstPage.data, ...remainingPages.flatMap((page) => page.data)];
 }
-
 
 export async function getShellImagesForShells(shellIds: string[]) {
   if (!shellIds.length) return {};
-  const firstPage = await list<ShellImage>('/api/shell-images', {
-    shell_ids: shellIds.join(','), limit: PAGE_SIZE, offset: 0, sort_by: 'created_at', sort_order: 'desc',
+  const firstPage = await list<ShellImage>("/api/shell-images", {
+    shell_ids: shellIds.join(","),
+    limit: PAGE_SIZE,
+    offset: 0,
+    sort_by: "created_at",
+    sort_order: "desc",
   });
-  const pageCount = Math.ceil(Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE);
-  const remainingPages = await Promise.all(
-    Array.from({ length: pageCount }, (_, index) => list<ShellImage>('/api/shell-images', {
-      shell_ids: shellIds.join(','), limit: PAGE_SIZE, offset: (index + 1) * PAGE_SIZE, sort_by: 'created_at', sort_order: 'desc',
-    })),
+  const pageCount = Math.ceil(
+    Math.max(0, firstPage.pagination.total - firstPage.data.length) / PAGE_SIZE,
   );
-  const images = [...firstPage.data, ...remainingPages.flatMap(page => page.data)];
+  const remainingPages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) =>
+      list<ShellImage>("/api/shell-images", {
+        shell_ids: shellIds.join(","),
+        limit: PAGE_SIZE,
+        offset: (index + 1) * PAGE_SIZE,
+        sort_by: "created_at",
+        sort_order: "desc",
+      }),
+    ),
+  );
+  const images = [...firstPage.data, ...remainingPages.flatMap((page) => page.data)];
   const bestImages: Record<string, ShellImage | undefined> = {};
-  images.forEach(image => {
+  images.forEach((image) => {
     if (!image.shell_id || !image.image_url || image.is_main_image !== true) return;
     const current = bestImages[image.shell_id];
     if (!current) bestImages[image.shell_id] = image;

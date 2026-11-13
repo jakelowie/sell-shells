@@ -1,5 +1,7 @@
 # sell-shells
 
+See [COMMERCE_FEATURES_API.md](COMMERCE_FEATURES_API.md) for the customer and commerce-management routes added to the existing guest checkout.
+
 Express and TypeScript APIs for the Supabase shell inventory, including shell localities. Authentication adds a protected `public.user_roles` table linked to Supabase Auth users. The API is organized into routes, controllers, services, Zod validators, and typed database models.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step Vercel setup for the API and frontend.

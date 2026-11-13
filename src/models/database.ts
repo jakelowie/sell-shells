@@ -1,17 +1,21 @@
 import type {
   ShellDescription,
   ShellDescriptionInsert,
-  ShellDescriptionUpdate
+  ShellDescriptionUpdate,
 } from "../validation/shell-description";
 import type {
   ShellStockType,
   ShellStockTypeInsert,
-  ShellStockTypeUpdate
+  ShellStockTypeUpdate,
 } from "../validation/shell-stock-type";
 import type { StockInfo, StockInfoInsert, StockInfoUpdate } from "../validation/stock-info";
 import type { ShellImage, ShellImageInsert, ShellImageUpdate } from "../validation/shell-image";
 import type { ShellType, ShellTypeInsert, ShellTypeUpdate } from "../validation/shell-type";
-import type { ShellLocality, ShellLocalityInsert, ShellLocalityUpdate } from "../validation/shell-locality";
+import type {
+  ShellLocality,
+  ShellLocalityInsert,
+  ShellLocalityUpdate,
+} from "../validation/shell-locality";
 
 export type AppRole = "user" | "admin" | "superadmin";
 export type UserRole = {
@@ -23,9 +27,26 @@ export type UserRole = {
 };
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
-export type ShopSession = { session_id: string; token_hash: string; created_at: string; last_seen_at: string };
-export type ShopCart = { cart_id: string; session_id: string; status: "active" | "converted"; created_at: string; updated_at: string };
-export type ShopCartItem = { cart_id: string; shell_id: string; quantity: number; created_at: string; updated_at: string };
+export type ShopSession = {
+  session_id: string;
+  token_hash: string;
+  created_at: string;
+  last_seen_at: string;
+};
+export type ShopCart = {
+  cart_id: string;
+  session_id: string;
+  status: "active" | "converted";
+  created_at: string;
+  updated_at: string;
+};
+export type ShopCartItem = {
+  cart_id: string;
+  shell_id: string;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+};
 export type ShopOrderStatus = "pending" | "paid" | "failed" | "cancelled" | "refunded";
 export type ShopPaymentStatus = "pending" | "captured" | "failed" | "cancelled" | "refunded";
 export type ShopOrder = {
@@ -48,6 +69,16 @@ export type ShopOrder = {
   paypal_capture_id: string | null;
   capture_request_id: string;
   payment_metadata: Json | null;
+  fulfillment_status: string;
+  shipping_courier_id: string | null;
+  shipping_service_id: string | null;
+  shipping_rate_id: string | null;
+  tracking_number: string | null;
+  shipped_at: string | null;
+  estimated_delivery_at: string | null;
+  shipping_country_code: string | null;
+  discount_code: string | null;
+  discount_amount: number;
   expires_at: string;
   created_at: string;
   updated_at: string;
@@ -113,7 +144,11 @@ export type Database = {
         Row: ShellDescription;
         Insert: ShellDescriptionInsert;
         Update: ShellDescriptionUpdate;
-        Relationships: [ShellDescriptionStockTypeRelationship, ShellDescriptionTypeRelationship, ShellDescriptionLocalityRelationship];
+        Relationships: [
+          ShellDescriptionStockTypeRelationship,
+          ShellDescriptionTypeRelationship,
+          ShellDescriptionLocalityRelationship,
+        ];
       };
       shell_locality: {
         Row: ShellLocality;
@@ -140,8 +175,18 @@ export type Database = {
         Relationships: [ShellImageRelationship];
       };
       unit_of_measurement: {
-        Row: { id: string; created_at: string; unit_name: string | null; measurement_for: string | null };
-        Insert: { id?: string; created_at?: string; unit_name?: string | null; measurement_for?: string | null };
+        Row: {
+          id: string;
+          created_at: string;
+          unit_name: string | null;
+          measurement_for: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          unit_name?: string | null;
+          measurement_for?: string | null;
+        };
         Update: Partial<{ unit_name: string | null; measurement_for: string | null }>;
         Relationships: [];
       };
@@ -159,38 +204,58 @@ export type Database = {
       };
       shop_sessions: {
         Row: ShopSession;
-        Insert: Pick<ShopSession, "token_hash"> & Partial<Pick<ShopSession, "session_id" | "created_at" | "last_seen_at">>;
+        Insert: Pick<ShopSession, "token_hash"> &
+          Partial<Pick<ShopSession, "session_id" | "created_at" | "last_seen_at">>;
         Update: Partial<Pick<ShopSession, "last_seen_at">>;
         Relationships: [];
       };
       shop_carts: {
         Row: ShopCart;
-        Insert: Pick<ShopCart, "session_id"> & Partial<Pick<ShopCart, "cart_id" | "status" | "created_at" | "updated_at">>;
+        Insert: Pick<ShopCart, "session_id"> &
+          Partial<Pick<ShopCart, "cart_id" | "status" | "created_at" | "updated_at">>;
         Update: Partial<Pick<ShopCart, "status" | "updated_at">>;
         Relationships: [];
       };
       shop_cart_items: {
         Row: ShopCartItem;
-        Insert: Pick<ShopCartItem, "cart_id" | "shell_id" | "quantity"> & Partial<Pick<ShopCartItem, "created_at" | "updated_at">>;
+        Insert: Pick<ShopCartItem, "cart_id" | "shell_id" | "quantity"> &
+          Partial<Pick<ShopCartItem, "created_at" | "updated_at">>;
         Update: Partial<Pick<ShopCartItem, "quantity" | "updated_at">>;
         Relationships: [];
       };
       shop_orders: {
         Row: ShopOrder;
-        Insert: Omit<ShopOrder, "order_id" | "order_number" | "created_at" | "updated_at"> & Partial<Pick<ShopOrder, "order_id" | "order_number" | "created_at" | "updated_at">>;
-        Update: Partial<Pick<ShopOrder, "order_status" | "payment_status" | "paypal_order_id" | "paypal_capture_id" | "payment_metadata" | "updated_at">>;
+        Insert: Omit<ShopOrder, "order_id" | "order_number" | "created_at" | "updated_at"> &
+          Partial<Pick<ShopOrder, "order_id" | "order_number" | "created_at" | "updated_at">>;
+        Update: Partial<
+          Pick<
+            ShopOrder,
+            | "order_status"
+            | "payment_status"
+            | "paypal_order_id"
+            | "paypal_capture_id"
+            | "payment_metadata"
+            | "updated_at"
+          >
+        >;
         Relationships: [];
       };
       shop_order_items: {
         Row: ShopOrderItem;
-        Insert: Omit<ShopOrderItem, "order_item_id" | "created_at"> & Partial<Pick<ShopOrderItem, "order_item_id" | "created_at">>;
-        Update: Partial<Pick<ShopOrderItem, "shell_name" | "quantity" | "unit_price" | "line_total">>;
+        Insert: Omit<ShopOrderItem, "order_item_id" | "created_at"> &
+          Partial<Pick<ShopOrderItem, "order_item_id" | "created_at">>;
+        Update: Partial<
+          Pick<ShopOrderItem, "shell_name" | "quantity" | "unit_price" | "line_total">
+        >;
         Relationships: [];
       };
     };
     Views: Record<string, never>;
     Functions: {
-      set_shell_main_image: { Args: { p_shell_id: string; p_image_id: string }; Returns: ShellImage };
+      set_shell_main_image: {
+        Args: { p_shell_id: string; p_image_id: string };
+        Returns: ShellImage;
+      };
       assign_user_role: {
         Args: { target_user_id: string; new_role: AppRole };
         Returns: UserRole;
@@ -222,6 +287,44 @@ export type Database = {
           p_currency: string;
           p_delivery_fee: number;
           p_expires_at: string;
+        };
+        Returns: Json;
+      };
+      shop_create_order_with_options: {
+        Args: {
+          p_session_id: string;
+          p_idempotency_key: string;
+          p_customer_name: string;
+          p_customer_email: string;
+          p_customer_phone: string;
+          p_delivery_address: Json;
+          p_currency: string;
+          p_delivery_fee: number;
+          p_expires_at: string;
+          p_discount_code: string | null;
+          p_shipping_rate_id: string;
+          p_shipping_country_code: string;
+        };
+        Returns: Json;
+      };
+      shop_update_fulfillment_status: {
+        Args: {
+          p_order_id: string;
+          p_new_status: string;
+          p_changed_by: string;
+          p_remarks?: string | null;
+          p_courier_id?: string | null;
+          p_tracking_number?: string | null;
+          p_estimated_delivery_at?: string | null;
+        };
+        Returns: Json;
+      };
+      shop_update_return_status: {
+        Args: {
+          p_return_id: string;
+          p_new_status: string;
+          p_changed_by: string;
+          p_remarks?: string | null;
         };
         Returns: Json;
       };

@@ -6,7 +6,7 @@ import { validateImageUpload } from "../middleware/image-upload";
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 2, fieldSize: 128, parts: 3 }
+  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 2, fieldSize: 128, parts: 3 },
 });
 router.get("/", controller.list);
 router.get("/:id", controller.get);

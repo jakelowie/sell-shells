@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export function useOrderExpiry(expiresAt: string | null) {
   const [now, setNow] = useState(() => Date.now());
@@ -20,12 +20,8 @@ export default function OrderExpiryCountdown({ expiresAt }: { expiresAt: string 
   const hoursPart = Math.floor(minutesPart / 60);
   return (
     <span className="order-expiry" role="timer" aria-live="off">
-      Time to pay:{' '}
-      {hoursPart > 0
-        ? `${String(hoursPart).padStart(2, '0')}:`
-        : ''}
-      {String(minutesPart % 60).padStart(2, '0')}:
-      {String(secondsPart).padStart(2, '0')}
+      Time to pay: {hoursPart > 0 ? `${String(hoursPart).padStart(2, "0")}:` : ""}
+      {String(minutesPart % 60).padStart(2, "0")}:{String(secondsPart).padStart(2, "0")}
     </span>
   );
 }

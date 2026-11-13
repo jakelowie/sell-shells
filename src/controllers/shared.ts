@@ -18,7 +18,9 @@ export function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: str
 
 export function sendError(response: Response, error: unknown): void {
   if (error instanceof ApiError) {
-    response.status(error.status).json({ error: error.message, ...(error.details ? { details: error.details } : {}) });
+    response
+      .status(error.status)
+      .json({ error: error.message, ...(error.details ? { details: error.details } : {}) });
     return;
   }
   if (error instanceof DatabaseOperationError) {
@@ -50,10 +52,12 @@ export function sendError(response: Response, error: unknown): void {
       message = "The record violates a database constraint or contains an invalid value.";
     } else if (error.code === "42501") {
       status = 403;
-      message = "The database role is not permitted to perform this operation. Check the Supabase grants and row-level security policies.";
+      message =
+        "The database role is not permitted to perform this operation. Check the Supabase grants and row-level security policies.";
     } else if (error.code === "42P01" || error.code === "PGRST205") {
       status = 500;
-      message = "The requested database table is unavailable. Check the table name and Supabase API schema configuration.";
+      message =
+        "The requested database table is unavailable. Check the table name and Supabase API schema configuration.";
     } else if (error.code === "PGRST204") {
       status = 400;
       message = "The request contains a column that is not available in the database schema.";
@@ -67,15 +71,15 @@ export function sendError(response: Response, error: unknown): void {
         code: error.code,
         message: error.databaseMessage,
         ...(error.details ? { details: error.details } : {}),
-        ...(error.hint ? { hint: error.hint } : {})
-      }
+        ...(error.hint ? { hint: error.hint } : {}),
+      },
     });
     return;
   }
   if (error instanceof StorageOperationError) {
     response.status(502).json({
       error: `Could not ${error.operation} the image in Supabase Storage.`,
-      storage: { message: error.storageMessage }
+      storage: { message: error.storageMessage },
     });
     return;
   }
@@ -83,6 +87,14 @@ export function sendError(response: Response, error: unknown): void {
     response.status(503).json({ error: "Database is unavailable. Configure Supabase in .env." });
     return;
   }
+  if (error instanceof TypeError && error.message === "fetch failed") {
+    console.error("[api] A backend service request failed:", error.message, error.cause);
+    response.status(503).json({
+      error: "Could not reach a required backend service. Check the server's database connection.",
+    });
+    return;
+  }
+  console.error("[api] Unhandled request error:", error);
   response.status(500).json({ error: "An unexpected database error occurred." });
 }
 

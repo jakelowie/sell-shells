@@ -8,7 +8,10 @@ const router = Router();
 router.get("/", async (request, response) => {
   const query = parseOrThrow(unitListQuerySchema, request.query, "unit query");
   const result = await service.listUnits(query);
-  response.json({ data: result.data, pagination: { limit: query.limit, offset: query.offset, total: result.total } });
+  response.json({
+    data: result.data,
+    pagination: { limit: query.limit, offset: query.offset, total: result.total },
+  });
 });
 router.get("/:id", async (request, response) => {
   const id = parseOrThrow(uuidSchema, request.params.id, "unit ID");

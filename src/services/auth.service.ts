@@ -12,8 +12,10 @@ export async function listUserRoles(): Promise<UserRole[]> {
 }
 
 export async function assignUserRole(userId: string, role: AppRole): Promise<UserRole | null> {
-  const { data, error } = await getSupabaseClient()
-    .rpc("assign_user_role", { target_user_id: userId, new_role: role });
+  const { data, error } = await getSupabaseClient().rpc("assign_user_role", {
+    target_user_id: userId,
+    new_role: role,
+  });
   throwDatabaseError(error);
   return data ?? null;
 }

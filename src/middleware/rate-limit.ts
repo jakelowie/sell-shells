@@ -20,7 +20,11 @@ function pruneExpiredClients(now: number): void {
 }
 
 /** Limits each client IP to ten requests in each one-second window. */
-export function rateLimitMiddleware(request: Request, response: Response, next: NextFunction): void {
+export function rateLimitMiddleware(
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): void {
   // CORS preflight requests do not reach the API handlers and should not consume quota.
   if (request.method === "OPTIONS") {
     next();
