@@ -56,11 +56,6 @@ export const createOrderSchema = z
       .strict(),
     delivery_address: deliveryAddressSchema,
     discount_code: z.string().trim().min(3).max(40).optional(),
-    shipping_rate_id: uuidSchema,
-    shipping_country_code: z
-      .string()
-      .regex(/^[A-Za-z]{2}$/)
-      .transform((value) => value.toUpperCase()),
   })
   .strict();
 

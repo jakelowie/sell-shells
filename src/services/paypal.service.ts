@@ -4,7 +4,6 @@ type PayPalMode = "sandbox" | "live";
 type PayPalSettings = {
   mode: PayPalMode;
   currency: string | null;
-  deliveryFee: number;
   clientId: string;
   clientSecret: string;
   webhookId: string | null;
@@ -37,10 +36,6 @@ export function getPayPalSettings(): PayPalSettings {
   const clientId = process.env.PAYPAL_CLIENT_ID?.trim() || "";
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET?.trim() || "";
   const currency = process.env.PAYPAL_CURRENCY?.trim().toUpperCase() || null;
-  const rawFee = process.env.PAYPAL_DELIVERY_FEE?.trim() || "0";
-  const deliveryFee = Number(rawFee);
-  if (!Number.isFinite(deliveryFee) || deliveryFee < 0)
-    throw new ApiError(503, "PAYPAL_DELIVERY_FEE must be a non-negative number.");
   if (currency && !/^[A-Z]{3}$/.test(currency))
     throw new ApiError(503, "PAYPAL_CURRENCY must be a three-letter ISO currency code.");
   if (currency) {
@@ -54,7 +49,6 @@ export function getPayPalSettings(): PayPalSettings {
   return {
     mode,
     currency,
-    deliveryFee,
     clientId,
     clientSecret,
     webhookId: process.env.PAYPAL_WEBHOOK_ID?.trim() || null,
@@ -67,7 +61,6 @@ export function getPublicShopConfig() {
   return {
     checkout_enabled: settings.checkoutEnabled,
     currency: settings.currency,
-    delivery_fee: settings.deliveryFee,
     paypal_client_id: settings.clientId || null,
     paypal_mode: settings.mode,
   };
@@ -87,7 +80,7 @@ export function formatPayPalAmount(amount: number, currency: string): string {
   if (Math.abs(amount * factor - Math.round(amount * factor)) > 1e-7) {
     throw new ApiError(
       400,
-      `Order total has more decimal places than ${currency} supports. Adjust product prices or the delivery fee.`,
+      `Order total has more decimal places than ${currency} supports. Adjust product prices or assigned shipping fees.`,
     );
   }
   return new Intl.NumberFormat("en-US", {

@@ -287,6 +287,7 @@ export const listInvoices: RequestHandler = async (req, res) => {
   res.json({ data: data ?? [] });
 };
 
+/** Legacy destination-rate listing retained for existing integrations. */
 export const shippingOptions: RequestHandler = async (req, res) => {
   const country = typeof req.query.country === "string" ? req.query.country.toUpperCase() : null;
   if (country && !/^[A-Z]{2}$/.test(country)) {
@@ -303,7 +304,6 @@ export const shippingOptions: RequestHandler = async (req, res) => {
     .eq("service.courier.active", true);
 
   if (country) query = query.eq("country_code", country);
-
   const { data, error } = await query;
   throwDatabaseError(error);
 
@@ -313,7 +313,6 @@ export const shippingOptions: RequestHandler = async (req, res) => {
       (!rate.starts_at || Date.parse(rate.starts_at) <= now) &&
       (!rate.expires_at || Date.parse(rate.expires_at) > now),
   );
-
   res.json({ data: availableRates });
 };
 

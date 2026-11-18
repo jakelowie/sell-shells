@@ -295,7 +295,7 @@ export default function AdminCommercePage({ onNavigate }: { onNavigate: (path: s
             onNavigate("/admin");
           }}
         >
-          <Shell size={19} /> shellhouse
+          <Shell size={19} /> craftshellhouse
         </a>
         <span>
           {user?.email} · {role}

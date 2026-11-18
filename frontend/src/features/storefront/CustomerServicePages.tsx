@@ -1,12 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
-import { CircleAlert, LoaderCircle, CheckCircle2 } from "lucide-react";
+import { CircleAlert, CheckCircle2 } from "lucide-react";
 
 import {
   getPublicStoreSettings,
   listFeedback,
   listInvoiceRequests,
   listReturnRequests,
-  listShippingOptions,
   requestInvoice,
   submitContactInquiry,
   submitFeedback,
@@ -562,27 +561,9 @@ function Invoices({ onNavigate }: { onNavigate: Nav }) {
 }
 
 function Delivery({ onNavigate }: { onNavigate: Nav }) {
-  const [country, setCountry] = useState("");
-  const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [payment, setPayment] = useState<any>(null);
 
-  const search = async () => {
-    setLoading(true);
-
-    try {
-      setRows((await listShippingOptions(country || undefined)).data);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    void search();
-
     void getPublicStoreSettings()
       .then((r) => setPayment(r.data.payment_information))
       .catch(() => setPayment(null));
@@ -611,47 +592,13 @@ function Delivery({ onNavigate }: { onNavigate: Nav }) {
         )}
       </section>
 
-      <p>
-        Delivery options and estimates depend on the destination and active shipping configuration.
-      </p>
-
-      <label>
-        Destination country code
-        <input
-          maxLength={2}
-          placeholder="ISO 3166-1 alpha-2"
-          value={country}
-          onChange={(e) => setCountry(e.target.value.toUpperCase())}
-        />
-      </label>
-
-      <button onClick={() => void search()}>Check delivery options</button>
-
-      {loading && <LoaderCircle className="spin" />}
-
-      {error && <Notice error={error} />}
-
-      <div className="service-record-list">
-        {rows.map((row) => (
-          <article className="service-record" key={row.rate_id}>
-            <strong>
-              {row.service?.courier?.name} · {row.service?.name}
-            </strong>
-
-            <p>
-              {row.country_code}:{" "}
-              {new Intl.NumberFormat(undefined, {
-                style: "currency",
-                currency: row.currency,
-              }).format(row.amount)}
-            </p>
-
-            <small>
-              Estimated {row.min_days}–{row.max_days} days
-            </small>
-          </article>
-        ))}
-      </div>
+      <section className="service-record">
+        <h2>Delivery charges</h2>
+        <p>
+          Each shell uses its assigned shipping method and fee. The bag and checkout show shipping
+          costs per shell and quantity before payment.
+        </p>
+      </section>
     </Frame>
   );
 }

@@ -25,6 +25,10 @@ const cartSchema = z.object({
       price: z.number().nullable(),
       is_deleted: z.boolean().nullable(),
       available: z.number(),
+      shipping_id: z.string().uuid().nullable().default(null),
+      shipping_name: z.string().nullable().default(null),
+      shipping_fee: z.number().nullable().default(null),
+      shipping_fee_is_active: z.boolean().nullable().default(null),
     }),
   ),
 });
@@ -69,6 +73,10 @@ const orderBundleSchema = z.object({
       quantity: z.number().int(),
       unit_price: z.number(),
       line_total: z.number(),
+      shipping_id: z.string().uuid().nullable().default(null),
+      shipping_name: z.string().nullable().default(null),
+      unit_shipping_fee: z.number().nullable().default(null),
+      shipping_total: z.number().nullable().default(null),
       created_at: z.string(),
     }),
   ),
@@ -209,21 +217,13 @@ export async function createOrder(sessionId: string, input: CreateOrderInput) {
     p_customer_phone: input.customer.phone,
     p_delivery_address: input.delivery_address as Json,
     p_currency: settings.currency,
-    p_delivery_fee: settings.deliveryFee,
     p_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     p_discount_code: input.discount_code ?? null,
-    p_shipping_rate_id: input.shipping_rate_id ?? null,
-    p_shipping_country_code: input.shipping_country_code ?? null,
   });
   if (error?.message?.includes("discount_invalid"))
     throw new ApiError(400, "This discount code is invalid or not eligible for this order.");
-  if (error?.message?.includes("shipping_rate_invalid"))
-    throw new ApiError(400, "That delivery option is no longer available for this destination.");
-  if (error?.message?.includes("shipping_currency_mismatch"))
-    throw new ApiError(
-      400,
-      "The selected shipping rate uses a different currency than this order.",
-    );
+  if (error?.message?.includes("shipping_fee_invalid"))
+    throw new ApiError(409, "A shell in your bag no longer has a valid assigned shipping fee.");
   if (
     error?.message?.includes("shipping_already_selected") ||
     error?.message?.includes("discount_already_applied") ||

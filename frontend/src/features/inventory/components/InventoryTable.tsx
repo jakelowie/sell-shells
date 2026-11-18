@@ -18,6 +18,7 @@ type Props = {
   stocks: StockType[];
   types: ShellType[];
   localities: ShellLocality[];
+  currency: string | null;
   onEdit: (record: unknown) => void;
   onDelete: (record: unknown) => void;
 };
@@ -35,6 +36,7 @@ export default function InventoryTable({
   stocks,
   types,
   localities,
+  currency,
   onEdit,
   onDelete,
 }: Props) {
@@ -117,6 +119,17 @@ export default function InventoryTable({
       subtitle: () => "",
       values: (row) => [textValue(row.measurement_for), textValue(row.id), dateValue(row)],
     },
+    "shipping-fees": {
+      columns: ["SHIPPING METHOD", "FEE", "STATUS", "CREATED"],
+      id: "id",
+      title: (row) => textValue(row.shipping_name, "Unnamed shipping method"),
+      subtitle: (row) => textValue(row.id),
+      values: (row) => [
+        formatCurrency(row.shipping_fee, currency),
+        row.is_active === true ? "Active" : "Inactive",
+        dateValue(row),
+      ],
+    },
   };
   const table = config[section];
 
@@ -173,6 +186,12 @@ export default function InventoryTable({
                           <span className="pill">{value}</span>
                         ) : section === "stock-info" && index === 3 ? (
                           <span className="quantity">{value}</span>
+                        ) : section === "shipping-fees" && index === 1 ? (
+                          <span
+                            className={`pill ${row.is_active === true ? "status-active" : "status-inactive"}`}
+                          >
+                            {value}
+                          </span>
                         ) : (
                           value
                         )}
@@ -199,4 +218,14 @@ export default function InventoryTable({
       </table>
     </div>
   );
+}
+
+function formatCurrency(value: unknown, currency: string | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  if (!currency) return `${value.toFixed(2)} (currency not set)`;
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${currency}`;
+  }
 }

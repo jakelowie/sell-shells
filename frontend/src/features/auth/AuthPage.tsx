@@ -44,7 +44,7 @@ export default function AuthPage({
             <span>
               <Shell size={20} />
             </span>{" "}
-            shellhouse
+            craftshellhouse
           </a>
           {role === "user" ? (
             <>
@@ -104,7 +104,7 @@ export default function AuthPage({
           <span>
             <Shell size={20} />
           </span>{" "}
-          shellhouse
+          craftshellhouse
         </a>
         <div className="auth-eyebrow">STAFF ACCESS</div>
         <h1>Welcome back.</h1>

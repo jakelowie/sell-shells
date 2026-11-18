@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Shellhouse Admin",
+    "slug": "shellhouse-admin",
+    "scheme": "shellhouse-admin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        { "photosPermission": "Select product images to manage Shellhouse inventory." }
+      ]
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}

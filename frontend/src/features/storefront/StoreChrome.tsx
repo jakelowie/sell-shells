@@ -60,7 +60,7 @@ export function StoreHeader({ onNavigate }: { onNavigate: (path: string) => void
           <Shell size={21} />
         </span>
         <span>
-          shellhouse<small>THE SHELL COLLECTION</small>
+          craftshellhouse<small>THE SHELL COLLECTION</small>
         </span>
       </a>
       <nav className="store-header-nav">
@@ -179,7 +179,7 @@ export function StoreFooter({ onNavigate }: { onNavigate: (path: string) => void
           onNavigate("/customers");
         }}
       >
-        <Shell size={17} /> shellhouse
+        <Shell size={17} /> craftshellhouse
       </a>
       <span>Natural forms, thoughtfully collected.</span>
       <span className="store-footer-links">
@@ -210,7 +210,7 @@ export function StoreFooter({ onNavigate }: { onNavigate: (path: string) => void
         >
           Payment & delivery
         </a>
-        <span>© Shellhouse Collection</span>
+        <span>© craftshellhouse</span>
       </span>
     </footer>
   );

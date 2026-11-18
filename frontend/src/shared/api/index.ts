@@ -1,4 +1,12 @@
 export { API_BASE_URL, list, mutate, record, request } from "./client";
+export {
+  createShippingFee,
+  deleteShippingFee,
+  getAllShippingFees,
+  getShippingFee,
+  listShippingFees,
+  updateShippingFee,
+} from "./shipping-fees";
 export type {
   MeasurementUnit,
   Page,
@@ -6,6 +14,7 @@ export type {
   ShellImage,
   ShellLocality,
   ShellType,
+  ShippingFee,
   StockInfo,
   StockType,
 } from "./types";

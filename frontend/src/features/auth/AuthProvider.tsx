@@ -12,6 +12,16 @@ import type { Session, User } from "@supabase/supabase-js";
 import { API_BASE_URL } from "../../shared/api/client";
 import { getAuthClient } from "./supabase";
 
+const SESSION_CHECK_TIMEOUT_MS = 12_000;
+const ROLE_CHECK_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then(resolve, reject).finally(() => window.clearTimeout(timeout));
+  });
+}
+
 export type AppRole = "user" | "admin" | "superadmin";
 type AuthState = {
   loading: boolean;
@@ -31,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
   const [configurationError, setConfigurationError] = useState<string | null>(null);
-  const [generation, setGeneration] = useState(0);
+  const generationRef = useRef(0);
   const resolvedUserId = useRef<string | null>(null);
 
   const resolveRole = useCallback(
@@ -51,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
       }
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      const timeout = window.setTimeout(() => controller.abort(), ROLE_CHECK_TIMEOUT_MS);
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
@@ -70,7 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoleError(null);
         }
       } catch (error) {
-        if (blocking && requestGeneration === generationRef.current) {
+        if (
+          requestGeneration === generationRef.current &&
+          (blocking || resolvedUserId.current !== session.user.id)
+        ) {
           resolvedUserId.current = null;
           setRole(null);
           setRoleError(
@@ -81,26 +94,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } finally {
         window.clearTimeout(timeout);
-        if (blocking && requestGeneration === generationRef.current) setLoading(false);
+        if (requestGeneration === generationRef.current) setLoading(false);
       }
     },
     [],
   );
 
-  const generationRef = useMemo(() => ({ current: generation }), []);
-  generationRef.current = generation;
-
   useEffect(() => {
     let active = true;
-    let sequence = 0;
     try {
       const client = getAuthClient();
       const {
         data: { subscription },
       } = client.auth.onAuthStateChange((event, session) => {
         if (!active) return;
-        const current = ++sequence;
-        setGeneration(current);
+        const current = ++generationRef.current;
         if (!session) {
           resolvedUserId.current = null;
           setUser(null);
@@ -126,14 +134,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const recheckRole = () => {
         if (document.visibilityState !== "visible") return;
-        void client.auth
-          .getSession()
+        const generationAtStart = generationRef.current;
+        void withTimeout(
+          client.auth.getSession(),
+          SESSION_CHECK_TIMEOUT_MS,
+          "Checking your session timed out.",
+        )
           .then(({ data, error }) => {
-            if (!active || !data.session) return;
+            if (!active || generationRef.current !== generationAtStart) return;
             if (error) throw error;
-            const current = ++sequence;
-            generationRef.current = current;
-            setGeneration(current);
+            if (!data.session) {
+              resolvedUserId.current = null;
+              setUser(null);
+              setRole(null);
+              setRoleError(null);
+              setLoading(false);
+              return;
+            }
+            const current = ++generationRef.current;
             void resolveRole(
               data.session,
               current,
@@ -141,24 +159,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             );
           })
           .catch((error) => {
-            if (!active) return;
+            if (!active || generationRef.current !== generationAtStart) return;
             setRoleError((error as Error).message || "Could not refresh your session.");
             setLoading(false);
           });
       };
       window.addEventListener("focus", recheckRole);
       document.addEventListener("visibilitychange", recheckRole);
-      void client.auth
-        .getSession()
+      const generationAtStart = generationRef.current;
+      void withTimeout(
+        client.auth.getSession(),
+        SESSION_CHECK_TIMEOUT_MS,
+        "Checking your session timed out. Please sign in again.",
+      )
         .then(({ data, error }) => {
-          if (!active) return;
+          if (!active || generationRef.current !== generationAtStart) return;
           if (error) throw error;
-          const current = ++sequence;
-          setGeneration(current);
+          const current = ++generationRef.current;
           void resolveRole(data.session, current);
         })
         .catch((error) => {
-          if (!active) return;
+          if (!active || generationRef.current !== generationAtStart) return;
           setConfigurationError((error as Error).message);
           setLoading(false);
         });
@@ -175,13 +196,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [resolveRole]);
 
   const refreshRole = useCallback(async () => {
+    const generationAtStart = generationRef.current;
     try {
-      const { data } = await getAuthClient().auth.getSession();
-      const current = generationRef.current + 1;
-      generationRef.current = current;
-      setGeneration(current);
+      const { data } = await withTimeout(
+        getAuthClient().auth.getSession(),
+        SESSION_CHECK_TIMEOUT_MS,
+        "Checking your session timed out. Please try again.",
+      );
+      if (generationRef.current !== generationAtStart) return;
+      const current = ++generationRef.current;
       await resolveRole(data.session, current);
     } catch (error) {
+      if (generationRef.current !== generationAtStart) return;
       setRole(null);
       setRoleError((error as Error).message);
       setLoading(false);

@@ -16,6 +16,7 @@ import type {
   ShellLocalityInsert,
   ShellLocalityUpdate,
 } from "../validation/shell-locality";
+import type { ShippingFee } from "../validation/shipping-fee";
 
 export type AppRole = "user" | "admin" | "superadmin";
 export type UserRole = {
@@ -91,6 +92,10 @@ export type ShopOrderItem = {
   quantity: number;
   unit_price: number;
   line_total: number;
+  shipping_id: string | null;
+  shipping_name: string | null;
+  unit_shipping_fee: number | null;
+  shipping_total: number | null;
   created_at: string;
 };
 
@@ -114,6 +119,13 @@ type ShellDescriptionLocalityRelationship = {
   isOneToOne: false;
   referencedRelation: "shell_locality";
   referencedColumns: ["locality_id"];
+};
+type ShellDescriptionShippingRelationship = {
+  foreignKeyName: "shell_description_shipping_id_fkey";
+  columns: ["shipping_id"];
+  isOneToOne: false;
+  referencedRelation: "shipping_fee";
+  referencedColumns: ["id"];
 };
 type ShellDescriptionStockRelationship = {
   foreignKeyName: "stock_info_shell_id_fkey";
@@ -148,7 +160,20 @@ export type Database = {
           ShellDescriptionStockTypeRelationship,
           ShellDescriptionTypeRelationship,
           ShellDescriptionLocalityRelationship,
+          ShellDescriptionShippingRelationship,
         ];
+      };
+      shipping_fee: {
+        Row: ShippingFee;
+        Insert: {
+          id?: string;
+          created_at?: string;
+          shipping_name?: string | null;
+          shipping_fee?: number | null;
+          is_active?: boolean | null;
+        };
+        Update: Partial<Pick<ShippingFee, "shipping_name" | "shipping_fee" | "is_active">>;
+        Relationships: [];
       };
       shell_locality: {
         Row: ShellLocality;
@@ -245,7 +270,17 @@ export type Database = {
         Insert: Omit<ShopOrderItem, "order_item_id" | "created_at"> &
           Partial<Pick<ShopOrderItem, "order_item_id" | "created_at">>;
         Update: Partial<
-          Pick<ShopOrderItem, "shell_name" | "quantity" | "unit_price" | "line_total">
+          Pick<
+            ShopOrderItem,
+            | "shell_name"
+            | "quantity"
+            | "unit_price"
+            | "line_total"
+            | "shipping_id"
+            | "shipping_name"
+            | "unit_shipping_fee"
+            | "shipping_total"
+          >
         >;
         Relationships: [];
       };
@@ -285,7 +320,6 @@ export type Database = {
           p_customer_phone: string;
           p_delivery_address: Json;
           p_currency: string;
-          p_delivery_fee: number;
           p_expires_at: string;
         };
         Returns: Json;
@@ -299,11 +333,8 @@ export type Database = {
           p_customer_phone: string;
           p_delivery_address: Json;
           p_currency: string;
-          p_delivery_fee: number;
           p_expires_at: string;
           p_discount_code: string | null;
-          p_shipping_rate_id: string;
-          p_shipping_country_code: string;
         };
         Returns: Json;
       };

@@ -47,7 +47,7 @@ export default function App() {
             <span>
               <Shell size={20} />
             </span>{" "}
-            shellhouse
+            craftshellhouse
           </a>
           <div className="auth-message auth-error">
             <CircleAlert size={17} />
@@ -102,7 +102,7 @@ function Unauthorized({ role, onNavigate }: { role: string; onNavigate: (path: s
           <span>
             <Shell size={20} />
           </span>{" "}
-          shellhouse
+          craftshellhouse
         </a>
         <div className="auth-message auth-error">
           <CircleAlert size={17} />

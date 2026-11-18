@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  ArrowDown,
   ArrowLeft,
   ArrowRight,
   ChevronLeft,
@@ -11,7 +10,6 @@ import {
   MapPin,
   Shell,
   ShoppingBag,
-  Sparkles,
   LayoutGrid,
   List,
   X,
@@ -120,7 +118,7 @@ function Storefront({
   const selectedType = types.find((type) => type.type_id === activeTypeId);
 
   useEffect(() => {
-    document.title = "Shellhouse — The Shell Collection";
+    document.title = "craftshellhouse — The Shell Collection";
   }, []);
 
   const loadTypes = useCallback(() => {
@@ -235,7 +233,7 @@ function Storefront({
       <StoreHeader onNavigate={onNavigate} />
 
       <main>
-        <section className="store-hero">
+        {/* <section className="store-hero">
           <div className="store-hero-copy">
             <span className="store-kicker">
               <Sparkles size={14} /> A SHELL COLLECTOR’S EDIT
@@ -261,7 +259,7 @@ function Storefront({
             <span>Curated natural specimens</span>
             <span>Collected with care&nbsp; · &nbsp;Shared with wonder</span>
           </div>
-        </section>
+        </section> */}
 
         <section id="collection" className="collection-section">
           <div className="collection-intro">
@@ -474,7 +472,11 @@ function Storefront({
                               <strong>
                                 {formatPrice(shell.price, shopConfig?.currency ?? null)}
                               </strong>
-                              <small>Shipping calculated separately</small>
+                              <small>
+                                {shell.shipping_fee
+                                  ? `${shell.shipping_fee.shipping_name || "Shipping"} · ${shell.shipping_fee.shipping_fee == null ? "Fee not set" : formatPrice(shell.shipping_fee.shipping_fee, shopConfig?.currency ?? null)}${shell.shipping_fee.is_active === false ? " · currently inactive" : ""}`
+                                  : "Shipping calculated separately"}
+                              </small>
                             </div>
                           )}
                           <div
@@ -805,7 +807,9 @@ function ShellDetails({
   )?.shell_type_name;
 
   useEffect(() => {
-    document.title = shell ? `${title(shell)} — Shellhouse` : "Shell details — Shellhouse";
+    document.title = shell
+      ? `${title(shell)} — craftshellhouse`
+      : "Shell details — craftshellhouse";
   }, [shell]);
 
   const infoRows = shell
@@ -824,6 +828,12 @@ function ShellDetails({
         ],
         ["Size", shell.shell_size],
         ["Weight", shell.shell_weight],
+        [
+          "Shipping",
+          shell.shipping_fee
+            ? `${shell.shipping_fee.shipping_name || "Shipping method"}${shell.shipping_fee.shipping_fee == null ? "" : ` · ${formatPrice(shell.shipping_fee.shipping_fee, shopConfig?.currency ?? null)}`}${shell.shipping_fee.is_active === false ? " (inactive)" : ""}`
+            : null,
+        ],
       ].filter((row): row is [string, string] => Boolean(row[1]))
     : [];
 

@@ -11,6 +11,12 @@ import {
   type StockInfo,
   type StockType,
 } from "../../../shared/api";
+import {
+  createShippingFee,
+  deleteShippingFee,
+  listShippingFees,
+  updateShippingFee,
+} from "../../../shared/api";
 import type { InventorySection } from "../types";
 
 export const INVENTORY_ENDPOINTS: Record<InventorySection, string> = {
@@ -21,6 +27,7 @@ export const INVENTORY_ENDPOINTS: Record<InventorySection, string> = {
   "stock-info": "/api/shell-stocks-info",
   images: "/api/shell-images",
   units: "/api/units",
+  "shipping-fees": "/api/shipping-fees",
 };
 
 const RECORD_ID_FIELD: Record<InventorySection, string> = {
@@ -31,6 +38,7 @@ const RECORD_ID_FIELD: Record<InventorySection, string> = {
   "stock-info": "stock_info_id",
   images: "image_id",
   units: "id",
+  "shipping-fees": "id",
 };
 
 export function inventoryRecordId(section: InventorySection, item: unknown): string | number {
@@ -45,6 +53,7 @@ export function inventoryRecordLabel(section: InventorySection, item: unknown): 
   if (section === "localities") return record.locality || "this locality";
   if (section === "images") return record.file_name || "this image";
   if (section === "units") return record.unit_name || "this unit";
+  if (section === "shipping-fees") return record.shipping_name || "this shipping fee";
   return "this record";
 }
 
@@ -61,6 +70,12 @@ export async function listInventory(
     sort_by: "created_at",
     sort_order: "desc",
   };
+  if (section === "shipping-fees")
+    return listShippingFees({
+      limit: pageSize,
+      offset: page * pageSize,
+      shipping_name: search || undefined,
+    });
   if (section === "shells") {
     if (search) params.shell_name = search;
     if (includeDeleted) params.include_deleted = true;
@@ -123,10 +138,16 @@ export async function saveInventoryRecord(
 
   if (section === "shells") {
     for (const field of ["shell_name", "author", "deepness", "from", "note"])
-      body[field] = values[field] || null;
+      if (values[field] !== undefined) body[field] = values[field] || null;
     body.shell_stock_type_id = values.shell_stock_type_id || null;
     body.shell_type_id = values.shell_type_id || null;
-    body.locality_id = values.locality_id || null;
+    if (values.locality_id !== undefined) body.locality_id = values.locality_id || null;
+    body.shipping_id =
+      values.shipping_id === undefined
+        ? editing
+          ? ((dialog.item?.shipping_id as string | null | undefined) ?? null)
+          : null
+        : values.shipping_id || null;
     body.price = values.price === "" ? null : Number(values.price);
     const withUnit = (
       raw: FormDataEntryValue | undefined,
@@ -155,6 +176,28 @@ export async function saveInventoryRecord(
     body.locality = values.locality || null;
   } else if (section === "units") {
     body = { unit_name: values.unit_name, measurement_for: values.measurement_for };
+  } else if (section === "shipping-fees") {
+    const shippingName = String(values.shipping_name ?? "").trim();
+    const feeText = String(values.shipping_fee ?? "");
+    const fee = Number(feeText);
+    if (!shippingName) throw new Error("Enter a shipping name.");
+    if (!feeText || !Number.isFinite(fee) || fee < 0)
+      throw new Error("Enter a valid shipping fee of zero or more.");
+    if (values.is_active !== "true" && values.is_active !== "false")
+      throw new Error("Choose whether this shipping option is active.");
+    const payload = {
+      shipping_name: shippingName,
+      shipping_fee: fee,
+      is_active: values.is_active === "true",
+    };
+    if (editing) {
+      const id = dialog.item?.id;
+      if (typeof id !== "string") throw new Error("The selected shipping fee has no identifier.");
+      await updateShippingFee(id, payload);
+    } else {
+      await createShippingFee(payload);
+    }
+    return;
   } else if (section === "stock-info") {
     body = { shell_id: values.shell_id || null, shell_stock_id: values.shell_stock_id || null };
     for (const field of ["shell_stock", "shell_pcs_per_stock"])
@@ -236,6 +279,16 @@ export async function saveInventoryRecord(
 }
 
 export function deleteInventoryRecord(section: InventorySection, id: string | number) {
+  if (section === "shipping-fees") {
+    return deleteShippingFee(String(id)).catch((error: unknown) => {
+      const message = (error as Error).message;
+      if (/still referenced|references a missing row/i.test(message))
+        throw new Error(
+          "This shipping option is assigned to one or more shells. Reassign those shells or clear their shipping fee before deleting it.",
+        );
+      throw error;
+    });
+  }
   return mutate(`${INVENTORY_ENDPOINTS[section]}/${encodeURIComponent(String(id))}`, "DELETE");
 }
 

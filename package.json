@@ -10,8 +10,8 @@
     "build:frontend": "npm --prefix frontend run build",
     "start": "node dist/server.js",
     "test": "npm run build && node --experimental-test-isolation=none --test",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,cjs,json}\" \"frontend/src/**/*.{ts,tsx,js,cjs,css,json}\" \"frontend/vite.config.ts\" \"tests/**/*.{ts,tsx,js,cjs,json}\" \"*.json\" \"frontend/*.json\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,cjs,json}\" \"frontend/src/**/*.{ts,tsx,js,cjs,css,json}\" \"frontend/vite.config.ts\" \"tests/**/*.{ts,tsx,js,cjs,json}\" \"*.json\" \"frontend/*.json\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,cjs,json}\" \"frontend/src/**/*.{ts,tsx,js,cjs,css,json}\" \"frontend/vite.config.ts\" \"tests/**/*.{ts,tsx,js,cjs,json}\" \"mobile/app/**/*.{ts,tsx,js,jsx,json}\" \"mobile/src/**/*.{ts,tsx,js,jsx,json}\" \"*.json\" \"frontend/*.json\" \"mobile/*.json\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,cjs,json}\" \"frontend/src/**/*.{ts,tsx,js,cjs,css,json}\" \"frontend/vite.config.ts\" \"tests/**/*.{ts,tsx,js,cjs,json}\" \"mobile/app/**/*.{ts,tsx,js,jsx,json}\" \"mobile/src/**/*.{ts,tsx,js,jsx,json}\" \"*.json\" \"frontend/*.json\" \"mobile/*.json\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

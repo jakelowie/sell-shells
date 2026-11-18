@@ -48,6 +48,9 @@
     },
     {
       "name": "Commerce features"
+    },
+    {
+      "name": "Shipping fees"
     }
   ],
   "paths": {
@@ -94,7 +97,9 @@
                 "deepness",
                 "price",
                 "locality_id",
-                "shell_weight"
+                "shell_weight",
+                "shell_size",
+                "shipping_id"
               ],
               "default": "created_at"
             }
@@ -185,6 +190,25 @@
             "description": "Exact text shell weight, including any unit.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "shell_size",
+            "in": "query",
+            "required": false,
+            "description": "Exact text shell size.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shipping_id",
+            "in": "query",
+            "required": false,
+            "description": "Shipping fee UUID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -3310,7 +3334,19 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cart_id": { "type": ["string", "null"], "format": "uuid" },
+                        "items": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ShopCartSnapshotItem" }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -3597,7 +3633,7 @@
         }
       },
       "post": {
-        "summary": "Create a checkout with server-verified discount and shipping pricing",
+        "summary": "Create a checkout with server-verified discount and shell-assigned shipping",
         "description": "See COMMERCE_FEATURES_API.md for request and response details.",
         "tags": ["Commerce features"],
         "responses": {
@@ -3630,8 +3666,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/ShopCheckoutRequest"
               }
             }
           }
@@ -3664,7 +3699,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "delivery_fee": {
+                          "type": "number",
+                          "description": "Persisted total shipping charged for the order."
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ShopOrderItemSnapshot" }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -3911,28 +3961,20 @@
     },
     "/api/customer/shipping": {
       "get": {
-        "summary": "List active shipping rates for a destination",
-        "description": "See COMMERCE_FEATURES_API.md for request and response details.",
+        "summary": "List legacy destination shipping rates",
+        "description": "Retained for compatibility. Current customer checkout uses shell-assigned shipping fees instead.",
+        "deprecated": true,
         "tags": ["Commerce features"],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "400": {
-            "description": "Validation or business-rule error"
-          },
-          "401": {
-            "description": "Authentication or guest session required"
-          },
-          "403": {
-            "description": "Insufficient role"
-          },
-          "404": {
-            "description": "Record not found"
-          },
-          "409": {
-            "description": "Conflict"
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "schema": { "type": "string", "pattern": "^[A-Z]{2}$" }
           }
+        ],
+        "responses": {
+          "200": { "description": "Legacy destination shipping options." },
+          "400": { "description": "Invalid country code." }
         }
       }
     },
@@ -5365,6 +5407,438 @@
           }
         }
       }
+    },
+    "/api/shipping-fees": {
+      "get": {
+        "tags": ["Shipping fees"],
+        "operationId": "listShippingFees",
+        "summary": "List shipping fees",
+        "description": "Publicly readable; create, update, and delete require an admin or superadmin.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["created_at", "shipping_name", "shipping_fee", "is_active"],
+              "default": "created_at"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "shipping_name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "description": "Filter active state.",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated shipping fees.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ShippingFee"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Shipping fees"],
+        "operationId": "createShippingFee",
+        "summary": "Create a shipping fee",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShippingFeeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created shipping fee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShippingFee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid fields or immutable properties supplied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only admins may mutate shipping fees.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shipping-fees/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Shipping fees"],
+        "operationId": "getShippingFee",
+        "summary": "Get a shipping fee",
+        "responses": {
+          "200": {
+            "description": "Shipping fee record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShippingFee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shipping fee not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Shipping fees"],
+        "operationId": "updateShippingFee",
+        "summary": "Update a shipping fee",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShippingFeeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated shipping fee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShippingFee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid UUID or fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only admins may mutate shipping fees.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shipping fee not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Database constraint violation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Shipping fees"],
+        "operationId": "deleteShippingFee",
+        "summary": "Delete a shipping fee",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted shipping fee.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ShippingFee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only admins may mutate shipping fees.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shipping fee not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Fee is referenced by a shell; it cannot be deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database operation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5439,7 +5913,13 @@
           "shell_type_id",
           "price",
           "locality_id",
-          "shell_weight"
+          "shell_weight",
+          "shell_size",
+          "shipping_id",
+          "shell_locality",
+          "shell_stock_type",
+          "shell_type",
+          "shipping_fee"
         ],
         "properties": {
           "created_at": {
@@ -5488,6 +5968,50 @@
           },
           "shell_size": {
             "type": ["string", "null"]
+          },
+          "shipping_id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "shell_locality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShellLocality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shell_stock_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShellStockType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shell_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShellType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "shipping_fee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShippingFee"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -5541,6 +6065,10 @@
           },
           "shell_size": {
             "type": ["string", "null"]
+          },
+          "shipping_id": {
+            "type": ["string", "null"],
+            "format": "uuid"
           }
         }
       },
@@ -6010,6 +6538,60 @@
           },
           "delivery_address": {
             "$ref": "#/components/schemas/ShopDeliveryAddress"
+          },
+          "discount_code": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 40,
+            "description": "Optional discount code. Shipping fees and totals are calculated by the server from the shells in the cart."
+          }
+        }
+      },
+      "ShopCartSnapshotItem": {
+        "type": "object",
+        "required": [
+          "shell_id",
+          "quantity",
+          "available",
+          "shipping_id",
+          "shipping_name",
+          "shipping_fee",
+          "shipping_fee_is_active"
+        ],
+        "properties": {
+          "shell_id": { "type": "string", "format": "uuid" },
+          "quantity": { "type": "integer" },
+          "shell_name": { "type": ["string", "null"] },
+          "price": { "type": ["number", "null"] },
+          "is_deleted": { "type": ["boolean", "null"] },
+          "available": { "type": "number" },
+          "shipping_id": { "type": ["string", "null"], "format": "uuid" },
+          "shipping_name": { "type": ["string", "null"] },
+          "shipping_fee": {
+            "type": ["number", "null"],
+            "description": "Fee per unit of this shell."
+          },
+          "shipping_fee_is_active": { "type": ["boolean", "null"] }
+        }
+      },
+      "ShopOrderItemSnapshot": {
+        "type": "object",
+        "properties": {
+          "order_item_id": { "type": "string", "format": "uuid" },
+          "shell_id": { "type": ["string", "null"], "format": "uuid" },
+          "shell_name": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "unit_price": { "type": "number" },
+          "line_total": { "type": "number" },
+          "shipping_id": { "type": ["string", "null"], "format": "uuid" },
+          "shipping_name": { "type": ["string", "null"] },
+          "unit_shipping_fee": {
+            "type": ["number", "null"],
+            "description": "Shipping charged per shell unit at order creation."
+          },
+          "shipping_total": {
+            "type": ["number", "null"],
+            "description": "unit_shipping_fee multiplied by quantity. Null for historical orders created before this migration."
           }
         }
       },
@@ -6046,6 +6628,52 @@
             }
           }
         }
+      },
+      "ShippingFee": {
+        "type": "object",
+        "required": ["id", "created_at", "shipping_name", "shipping_fee", "is_active"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "shipping_name": {
+            "type": ["string", "null"]
+          },
+          "shipping_fee": {
+            "type": ["number", "null"]
+          },
+          "is_active": {
+            "type": ["boolean", "null"]
+          }
+        }
+      },
+      "ShippingFeeCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "shipping_name": {
+            "type": ["string", "null"]
+          },
+          "shipping_fee": {
+            "type": ["number", "null"]
+          },
+          "is_active": {
+            "type": ["boolean", "null"]
+          }
+        }
+      },
+      "ShippingFeeUpdate": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ShippingFeeCreate"
+          }
+        ],
+        "minProperties": 1
       }
     },
     "securitySchemes": {

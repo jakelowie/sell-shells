@@ -17,8 +17,6 @@ const validCheckout = {
     country: "Philippines",
     address_details: "Leave at reception",
   },
-  shipping_rate_id: "22222222-2222-4222-8222-222222222222",
-  shipping_country_code: "PH",
 };
 
 test("shop validation accepts a complete guest checkout and rejects malformed customer data", () => {
@@ -47,28 +45,19 @@ test("shop validation accepts a complete guest checkout and rejects malformed cu
   assert.equal(createOrderSchema.safeParse({ ...validCheckout, admin: true }).success, false);
 });
 
-test("checkout requires a valid configured delivery rate and country code", () => {
-  const rate = "22222222-2222-4222-8222-222222222222";
+test("checkout rejects client-supplied shipping prices or destination rate selections", () => {
   assert.equal(
     createOrderSchema.safeParse({
       ...validCheckout,
-      shipping_rate_id: rate,
-      shipping_country_code: "ph",
-    }).data.shipping_country_code,
-    "PH",
-  );
-  assert.equal(
-    createOrderSchema.safeParse({ ...validCheckout, shipping_rate_id: undefined }).success,
+      shipping_rate_id: "22222222-2222-4222-8222-222222222222",
+    }).success,
     false,
   );
   assert.equal(
-    createOrderSchema.safeParse({ ...validCheckout, shipping_country_code: undefined }).success,
+    createOrderSchema.safeParse({ ...validCheckout, shipping_country_code: "PH" }).success,
     false,
   );
-  assert.equal(
-    createOrderSchema.safeParse({ ...validCheckout, shipping_country_code: "PHL" }).success,
-    false,
-  );
+  assert.equal(createOrderSchema.safeParse({ ...validCheckout, delivery_fee: 0 }).success, false);
 });
 
 test("shop cart quantity validation enforces UUID and bounded integer quantities", () => {

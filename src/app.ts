@@ -2,6 +2,7 @@ import "./config/env";
 import express from "express";
 import shellsRouter from "./routes/shells";
 import shellLocalitiesRouter from "./routes/shell-localities";
+import shippingFeesRouter from "./routes/shipping-fees";
 import shellStockTypesRouter from "./routes/shell-stock-types";
 import shellTypesRouter from "./routes/shell-type";
 import stockInfoRouter from "./routes/stock-info";
@@ -66,6 +67,7 @@ app.use(
   requireInventoryWriteRole,
   shellLocalitiesRouter,
 );
+app.use("/api/shipping-fees", optionalAuthenticate, requireInventoryWriteRole, shippingFeesRouter);
 app.use(
   "/api/shell-stock-types",
   authenticate,

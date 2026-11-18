@@ -151,7 +151,7 @@ export default function AdminOrdersPage({ onNavigate }: { onNavigate: (path: str
           }}
         >
           <Shell size={19} />
-          shellhouse
+          craftshellhouse
         </a>
 
         <span>

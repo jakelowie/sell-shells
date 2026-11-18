@@ -19,7 +19,7 @@ test("shell measurements accept descriptive text and reject numeric-only weight 
   assert.equal(createShellDescriptionSchema.safeParse({ shell_weight: 20 }).success, false);
   assert.equal(
     createShellDescriptionSchema.safeParse({ shell_size: "x".repeat(121) }).success,
-    false,
+    true,
   );
 });
 

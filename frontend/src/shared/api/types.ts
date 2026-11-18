@@ -14,6 +14,15 @@ export type Shell = {
   locality_id: string | null;
   shell_weight: string | null;
   shell_size: string | null;
+  shipping_id: string | null;
+  shipping_fee?: ShippingFee | null;
+};
+export type ShippingFee = {
+  id: string;
+  created_at: string;
+  shipping_name: string | null;
+  shipping_fee: number | null;
+  is_active: boolean | null;
 };
 export type MeasurementUnit = {
   id: string;
@@ -46,7 +55,6 @@ export type ShellImage = {
 export type ShopConfig = {
   checkout_enabled: boolean;
   currency: string | null;
-  delivery_fee: number;
   paypal_client_id: string | null;
   paypal_mode: "sandbox" | "live";
 };
@@ -57,6 +65,10 @@ export type ShopCartItem = {
   price: number | null;
   is_deleted: boolean | null;
   available: number;
+  shipping_id: string | null;
+  shipping_name: string | null;
+  shipping_fee: number | null;
+  shipping_fee_is_active: boolean | null;
 };
 export type ShopCart = { cart_id: string | null; items: ShopCartItem[] };
 export type DeliveryAddress = {
@@ -75,6 +87,10 @@ export type ShopOrderItem = {
   quantity: number;
   unit_price: number;
   line_total: number;
+  shipping_id: string | null;
+  shipping_name: string | null;
+  unit_shipping_fee: number | null;
+  shipping_total: number | null;
   created_at: string;
 };
 export type ShopOrder = {

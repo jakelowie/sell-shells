@@ -510,6 +510,14 @@ tbody tr:hover {
   background: #edf3ed;
   color: #4a7259;
 }
+.status-active {
+  background: #edf3ed;
+  color: #4a7259;
+}
+.status-inactive {
+  background: #f5eeee;
+  color: #8d625d;
+}
 .quantity {
   color: #4c6654;
   font-weight: 600;
@@ -803,6 +811,9 @@ tbody tr:hover {
   padding: 9px 14px;
   font-size: 10px;
   color: #777;
+}
+.advanced-info-toggle {
+  align-self: flex-start;
 }
 .toast {
   position: fixed;

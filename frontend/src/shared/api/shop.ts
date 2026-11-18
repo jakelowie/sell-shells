@@ -184,6 +184,7 @@ export async function requestInvoice(order_id: string) {
 export async function listInvoiceRequests() {
   return shopRequest<{ data: any[] }>("/api/customer/invoices");
 }
+/** Legacy destination-rate listing; guest checkout uses shell-assigned fees. */
 export async function listShippingOptions(country?: string) {
   const query = country ? `?country=${encodeURIComponent(country)}` : "";
   return request<{ data: any[] }>(`/api/customer/shipping${query}`);
@@ -204,8 +205,6 @@ export async function validateDiscount(code: string, subtotal: number) {
 export async function createShopOrder(input: {
   idempotency_key: string;
   discount_code?: string;
-  shipping_rate_id: string;
-  shipping_country_code: string;
   customer: { name: string; email: string; phone: string };
   delivery_address: DeliveryAddress;
 }): Promise<ShopOrder> {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { pageQuerySchema, timestampSchema, uuidSchema } from "./common";
+import type { ShippingFee } from "./shipping-fee";
 
 export const shellDescriptionColumns = {
   shell_id: uuidSchema.optional(),
@@ -14,8 +15,9 @@ export const shellDescriptionColumns = {
   shell_type_id: uuidSchema.nullable().optional(),
   price: z.number().finite().nullable().optional(),
   locality_id: uuidSchema.nullable().optional(),
-  shell_weight: z.string().max(80).nullable().optional(),
-  shell_size: z.string().max(120).nullable().optional(),
+  shell_weight: z.string().nullable().optional(),
+  shell_size: z.string().nullable().optional(),
+  shipping_id: uuidSchema.nullable().optional(),
 };
 
 export const createShellDescriptionSchema = z.object(shellDescriptionColumns).strict();
@@ -35,6 +37,7 @@ export const listShellDescriptionsSchema = pageQuerySchema
         "locality_id",
         "shell_weight",
         "shell_size",
+        "shipping_id",
       ])
       .default("created_at"),
     shell_name: z.string().optional(),
@@ -42,8 +45,10 @@ export const listShellDescriptionsSchema = pageQuerySchema
     locality_id: uuidSchema.optional(),
     price: z.coerce.number().finite().optional(),
     shell_weight: z.string().optional(),
+    shell_size: z.string().optional(),
     shell_stock_type_id: uuidSchema.optional(),
     shell_type_id: uuidSchema.optional(),
+    shipping_id: uuidSchema.optional(),
     include_deleted: z
       .enum(["true", "false"])
       .default("false")
@@ -52,6 +57,12 @@ export const listShellDescriptionsSchema = pageQuerySchema
   .strict();
 
 export type ShellDescription = Required<z.infer<typeof createShellDescriptionSchema>>;
+export type ShellDescriptionRecord = ShellDescription & {
+  shell_locality: { locality_id: string; created_at: string; locality: string | null } | null;
+  shell_stock_type: { stock_id: string; created_at: string; stock_name: string | null } | null;
+  shell_type: { type_id: string; created_at: string; shell_type_name: string | null } | null;
+  shipping_fee: ShippingFee | null;
+};
 export type ShellDescriptionInsert = z.infer<typeof createShellDescriptionSchema>;
 export type ShellDescriptionUpdate = z.infer<typeof updateShellDescriptionSchema>;
 export type ShellDescriptionListQuery = z.infer<typeof listShellDescriptionsSchema>;

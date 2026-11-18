@@ -6,8 +6,10 @@ const shellId = "11111111-1111-4111-8111-111111111111";
 const stockTypeId = "33333333-3333-4333-8333-333333333333";
 const shellImageId = "55555555-5555-4555-8555-555555555555";
 const localityId = "77777777-7777-4777-8777-777777777777";
+const shippingFeeId = "99999999-9999-4999-8999-999999999998";
 const appUsers = {
   "user-token": { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", email: "reader@example.com" },
+  "shopper-token": { id: "abababab-abab-4bab-8bab-abababababab", email: "shopper@example.com" },
   "admin-token": { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", email: "admin@example.com" },
   "superadmin-token": {
     id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
@@ -37,6 +39,7 @@ let failNextStorageUpload;
 let signedTtls;
 let shellImageNextNumber;
 let unitNextNumber;
+let shippingFeeNextNumber;
 let lastApiRequestAt = 0;
 
 function sendJson(response, status, payload, headers = {}) {
@@ -275,61 +278,74 @@ function databaseHandler(request, response) {
               price: null,
               locality_id: null,
               shell_weight: null,
+              shell_size: null,
+              shipping_id: null,
               ...body,
             }
-          : table === "shell_locality"
+          : table === "shipping_fee"
             ? {
-                locality_id: body.locality_id ?? ids.shell_locality,
+                id:
+                  body.id ??
+                  `10101010-1010-4010-8010-${String(shippingFeeNextNumber++).padStart(12, "0")}`,
                 created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
-                locality: null,
+                shipping_name: null,
+                shipping_fee: null,
+                is_active: null,
                 ...body,
               }
-            : table === "shell_stock_type"
+            : table === "shell_locality"
               ? {
-                  stock_id: body.stock_id ?? ids.shell_stock_type,
+                  locality_id: body.locality_id ?? ids.shell_locality,
                   created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
-                  stock_name: null,
+                  locality: null,
                   ...body,
                 }
-              : table === "shell_type"
+              : table === "shell_stock_type"
                 ? {
-                    type_id: body.type_id ?? ids.shell_type,
+                    stock_id: body.stock_id ?? ids.shell_stock_type,
                     created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
-                    shell_type_name: "",
+                    stock_name: null,
                     ...body,
                   }
-                : table === "shell_stocks_info"
+                : table === "shell_type"
                   ? {
-                      stock_info_id: body.stock_info_id ?? stockInfoNextId++,
+                      type_id: body.type_id ?? ids.shell_type,
                       created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
-                      shell_id: null,
-                      shell_stock_id: null,
-                      shell_stock: null,
-                      shell_pcs_per_stock: null,
-                      shell_total_available: null,
+                      shell_type_name: "",
                       ...body,
                     }
-                  : table === "unit_of_measurement"
+                  : table === "shell_stocks_info"
                     ? {
-                        id:
-                          body.id ??
-                          `99999999-9999-4999-8999-${String(unitNextNumber++).padStart(12, "0")}`,
+                        stock_info_id: body.stock_info_id ?? stockInfoNextId++,
                         created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
-                        unit_name: null,
-                        measurement_for: null,
+                        shell_id: null,
+                        shell_stock_id: null,
+                        shell_stock: null,
+                        shell_pcs_per_stock: null,
+                        shell_total_available: null,
                         ...body,
                       }
-                    : {
-                        image_id:
-                          body.image_id ??
-                          `66666666-6666-4666-8666-${String(shellImageNextNumber++).padStart(12, "0")}`,
-                        created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
-                        file_name: "",
-                        storage_path: null,
-                        is_main_image: null,
-                        shell_id: null,
-                        ...body,
-                      };
+                    : table === "unit_of_measurement"
+                      ? {
+                          id:
+                            body.id ??
+                            `99999999-9999-4999-8999-${String(unitNextNumber++).padStart(12, "0")}`,
+                          created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
+                          unit_name: null,
+                          measurement_for: null,
+                          ...body,
+                        }
+                      : {
+                          image_id:
+                            body.image_id ??
+                            `66666666-6666-4666-8666-${String(shellImageNextNumber++).padStart(12, "0")}`,
+                          created_at: body.created_at ?? "2026-10-14T00:00:00.000Z",
+                          file_name: "",
+                          storage_path: null,
+                          is_main_image: null,
+                          shell_id: null,
+                          ...body,
+                        };
 
       if (rows.some((row) => String(row[idColumn]) === String(newRow[idColumn]))) {
         sendDbError(response, 409, "23505", "duplicate key value violates unique constraint");
@@ -357,6 +373,14 @@ function databaseHandler(request, response) {
         !records.shell_locality.some((row) => row.locality_id === newRow.locality_id)
       ) {
         sendDbError(response, 409, "23503", "locality_id foreign key violation");
+        return;
+      }
+      if (
+        table === "shell_description" &&
+        newRow.shipping_id &&
+        !records.shipping_fee.some((row) => row.id === newRow.shipping_id)
+      ) {
+        sendDbError(response, 409, "23503", "shipping_id foreign key violation");
         return;
       }
       if (
@@ -403,6 +427,14 @@ function databaseHandler(request, response) {
         return;
       }
       if (
+        table === "shell_description" &&
+        updated.shipping_id &&
+        !records.shipping_fee.some((row) => row.id === updated.shipping_id)
+      ) {
+        sendDbError(response, 409, "23503", "shipping_id foreign key violation");
+        return;
+      }
+      if (
         table === "shell_images" &&
         updated.shell_id &&
         !records.shell_description.some((row) => row.shell_id === updated.shell_id)
@@ -427,6 +459,13 @@ function databaseHandler(request, response) {
         records.shell_description.some((row) => row.locality_id === selected[0]?.locality_id)
       ) {
         sendDbError(response, 409, "23503", "locality is referenced by shell_description");
+        return;
+      }
+      if (
+        table === "shipping_fee" &&
+        records.shell_description.some((row) => row.shipping_id === selected[0]?.id)
+      ) {
+        sendDbError(response, 409, "23503", "shipping fee is referenced by shell_description");
         return;
       }
       if (
@@ -463,6 +502,16 @@ before(async () => {
         is_deleted: false,
         shell_stock_type_id: stockTypeId,
         shell_type_id: ids.shell_type,
+        shipping_id: shippingFeeId,
+      },
+    ],
+    shipping_fee: [
+      {
+        id: shippingFeeId,
+        created_at: "2026-10-13T00:00:00.000Z",
+        shipping_name: "Standard delivery",
+        shipping_fee: 5.5,
+        is_active: true,
       },
     ],
     shell_stock_type: [
@@ -522,6 +571,13 @@ before(async () => {
         updated_at: "2026-10-15T00:00:00.000Z",
       },
       {
+        user_id: appUsers["shopper-token"].id,
+        email: appUsers["shopper-token"].email,
+        role: "user",
+        created_at: "2026-10-15T00:00:00.000Z",
+        updated_at: "2026-10-15T00:00:00.000Z",
+      },
+      {
         user_id: appUsers["admin-token"].id,
         email: appUsers["admin-token"].email,
         role: "admin",
@@ -551,6 +607,7 @@ before(async () => {
   signedTtls = [];
   shellImageNextNumber = 1;
   unitNextNumber = 3;
+  shippingFeeNextNumber = 1;
 
   dbServer = http.createServer(databaseHandler);
   await new Promise((resolve) => dbServer.listen(0, "127.0.0.1", resolve));
@@ -673,9 +730,19 @@ test("public catalog reads need no customer login while inventory writes and rol
 
 test("health and shell description CRUD use Supabase", async () => {
   assert.deepEqual(await (await fetch(`${apiUrl}/health`)).json(), { status: "ok" });
+  const openApi = await (await fetch(`${apiUrl}/api-docs.json`)).json();
+  assert.ok(openApi.paths["/api/shipping-fees"].get);
+  assert.ok(openApi.paths["/api/shipping-fees/{id}"].delete);
+  assert.ok(openApi.components.schemas.ShellDescription.properties.shipping_id);
+  assert.ok(openApi.components.schemas.ShellDescription.properties.shell_size);
   const list = await api("/api/shells?limit=10&sort_by=shell_name&sort_order=asc");
   assert.equal(list.status, 200);
   assert.equal(list.body.data[0].shell_name, "Tiger Cowrie");
+  assert.equal(list.body.data[0].shipping_fee.shipping_name, "Standard delivery");
+  assert.equal(list.body.data[0].shell_locality.locality, "Philippines");
+  assert.equal(list.body.data[0].shell_stock_type.stock_name, "Bulk");
+  assert.equal(list.body.data[0].shell_type.shell_type_name, "Cowrie");
+  assert.equal(list.body.data[0].shipping_id, shippingFeeId);
   assert.equal(list.body.pagination.total, 1);
   assert.equal((await api(`/api/shells/${shellId}`)).status, 200);
 
@@ -694,15 +761,82 @@ test("health and shell description CRUD use Supabase", async () => {
       price: 42.5,
       shell_weight: "18.25 oz",
       shell_size: "approximately 3 inches",
+      shipping_id: shippingFeeId,
     },
   });
   assert.equal(updated.body.data.locality_id, localityId);
   assert.equal(updated.body.data.price, 42.5);
   assert.equal(updated.body.data.shell_weight, "18.25 oz");
   assert.equal(updated.body.data.shell_size, "approximately 3 inches");
+  assert.equal(updated.body.data.shipping_fee.shipping_fee, 5.5);
+  assert.equal((await api(`/api/shells?shipping_id=${shippingFeeId}`)).body.data.length, 2);
+  assert.equal(
+    (await api("/api/shells", { method: "POST", body: { shipping_id: "not-a-uuid" } })).status,
+    400,
+  );
+  assert.equal(
+    (
+      await api("/api/shells", {
+        method: "POST",
+        body: { shipping_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+      })
+    ).status,
+    409,
+  );
   const deleted = await api(`/api/shells/${shellId}`, { method: "DELETE" });
   assert.equal(deleted.body.data.is_deleted, true);
   assert.equal((await api(`/api/shells/${shellId}`)).status, 404);
+});
+
+test("shipping fees support filtered CRUD and preserve referenced shell relationships", async () => {
+  const list = await api("/api/shipping-fees?is_active=true&shipping_name=Standard%20delivery");
+  assert.equal(list.status, 200);
+  assert.equal(list.body.data[0].id, shippingFeeId);
+  assert.equal(list.body.data[0].shipping_fee, 5.5);
+  assert.equal((await api(`/api/shipping-fees/${shippingFeeId}`)).body.data.is_active, true);
+  assert.equal((await api("/api/shipping-fees/not-a-uuid")).status, 400);
+  assert.equal((await api("/api/shipping-fees/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")).status, 404);
+  assert.equal(
+    (await api(`/api/shipping-fees/${shippingFeeId}`, { method: "DELETE" })).status,
+    409,
+  );
+
+  const created = await api("/api/shipping-fees", {
+    method: "POST",
+    body: { shipping_name: "Express", shipping_fee: 12.75, is_active: false },
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  assert.match(created.body.data.id, /^[0-9a-f-]{36}$/i);
+  assert.ok(created.body.data.created_at);
+  assert.equal(
+    (await api("/api/shipping-fees", { method: "POST", body: { shipping_fee: "invalid" } })).status,
+    400,
+  );
+  assert.equal(
+    (await api("/api/shipping-fees", { method: "POST", body: { id: shippingFeeId } })).status,
+    400,
+  );
+  assert.equal(
+    (
+      await api("/api/shipping-fees", {
+        token: "shopper-token",
+        method: "POST",
+        body: { shipping_name: "Denied" },
+      })
+    ).status,
+    403,
+  );
+
+  const updated = await api(`/api/shipping-fees/${created.body.data.id}`, {
+    method: "PATCH",
+    body: { shipping_fee: 15, is_active: true },
+  });
+  assert.equal(updated.body.data.shipping_fee, 15);
+  assert.equal(updated.body.data.is_active, true);
+  assert.equal(
+    (await api(`/api/shipping-fees/${created.body.data.id}`, { method: "DELETE" })).status,
+    200,
+  );
 });
 
 test("guest commerce config is public while guest cart data requires a shop capability token", async () => {

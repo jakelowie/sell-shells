@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { CircleAlert, LoaderCircle, X } from "lucide-react";
-import type { Shell, ShellLocality, ShellType, StockType } from "../../../shared/api";
+import type { Shell, ShellLocality, ShellType, ShippingFee, StockType } from "../../../shared/api";
 import type { MeasurementUnit } from "../../../shared/api";
 import type { ShellImage } from "../../../shared/api";
 import type { InventorySection } from "../types";
@@ -15,6 +15,11 @@ type Props = {
   localities: ShellLocality[];
   units: MeasurementUnit[];
   images: ShellImage[];
+  shippingFees: ShippingFee[];
+  shippingFeesLoading: boolean;
+  shippingFeesError: string;
+  onRetryShippingFees: () => void;
+  currency: string | null;
   saving: boolean;
   error: string;
   onClose: () => void;
@@ -30,6 +35,11 @@ export default function RecordModal({
   localities,
   units,
   images,
+  shippingFees,
+  shippingFeesLoading,
+  shippingFeesError,
+  onRetryShippingFees,
+  currency,
   saving,
   error,
   onClose,
@@ -46,6 +56,7 @@ export default function RecordModal({
   const [mainChoice, setMainChoice] = useState("");
   const [previews, setPreviews] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
+  const [showAdvancedInfo, setShowAdvancedInfo] = useState(false);
   useEffect(() => {
     const available = images.filter((image) => !removedImageIds.includes(image.image_id));
     if (!mainChoice && available.some((image) => image.is_main_image))
@@ -67,6 +78,7 @@ export default function RecordModal({
       value?: string;
       onChange?: React.ChangeEventHandler<HTMLInputElement>;
       step?: string;
+      min?: string;
     } = {},
   ) => (
     <label className="field">
@@ -78,6 +90,7 @@ export default function RecordModal({
         value={options.value}
         onChange={options.onChange}
         step={options.step}
+        min={options.min}
         placeholder={options.placeholder}
         required={options.required}
       />
@@ -112,7 +125,9 @@ export default function RecordModal({
             ? "stock type"
             : section === "shell-types"
               ? "shell type"
-              : "locality";
+              : section === "shipping-fees"
+                ? "shipping fee"
+                : "locality";
   const isPerSet = stocks
     .find((stock) => stock.stock_id === stockTypeId)
     ?.stock_name?.trim()
@@ -184,53 +199,64 @@ export default function RecordModal({
                 placeholder: "e.g. Conus textile",
               })}
 
-              <div className="field-grid">
-                {input("author", "Author", {
-                  placeholder: "Species author",
-                })}
-
-                {input("deepness", "Deepness", {
-                  placeholder: "Depth or range",
-                })}
-
-                {input("from", "Source", {
-                  placeholder: "Source or provenance",
-                })}
-
-                {input("price", "Price", {
-                  type: "number",
-                  step: "any",
-                  placeholder: "Amount",
-                })}
-
-                {input("shell_weight", "Weight", { placeholder: "e.g. 20 g" })}
-                {select(
-                  "shell_weight_unit",
-                  "Weight unit (optional)",
-                  units
-                    .filter((unit) => unit.measurement_for === "weight")
-                    .map((unit) => ({ id: unit.unit_name || "", label: unit.unit_name || "" })),
-                )}
-                {input("shell_size", "Size", {
-                  placeholder: "e.g. 5–7 cm, approximately 3, or 2 × 4",
-                })}
-                {select(
-                  "shell_size_unit",
-                  "Size unit (optional)",
-                  units
-                    .filter((unit) => unit.measurement_for === "size")
-                    .map((unit) => ({ id: unit.unit_name || "", label: unit.unit_name || "" })),
-                )}
-              </div>
+              <label className="field">
+                <span>Description</span>
+                <textarea
+                  name="note"
+                  defaultValue={String(field("note"))}
+                  rows={3}
+                  placeholder="Add shell description"
+                />
+              </label>
 
               {select(
-                "locality_id",
-                "Locality",
-                localities.map((locality) => ({
-                  id: locality.locality_id,
-                  label: locality.locality || locality.locality_id,
+                "shell_type_id",
+                "Shell type",
+                types.map((type) => ({
+                  id: type.type_id,
+                  label: type.shell_type_name || type.type_id,
                 })),
               )}
+
+              {input("price", "Price", {
+                type: "number",
+                step: "any",
+                placeholder: "Amount",
+              })}
+
+              <label className="field">
+                <span>Shipping fee</span>
+                <select
+                  name="shipping_id"
+                  defaultValue={String(field("shipping_id"))}
+                  disabled={shippingFeesLoading || Boolean(shippingFeesError)}
+                >
+                  <option value="">No shipping fee assigned</option>
+                  {shippingFees
+                    .filter((fee) => fee.is_active === true || fee.id === field("shipping_id"))
+                    .map((fee) => (
+                      <option key={fee.id} value={fee.id}>
+                        {fee.shipping_name || "Unnamed method"} ·{" "}
+                        {fee.shipping_fee == null
+                          ? "Fee not set"
+                          : formatCurrency(fee.shipping_fee, currency)}
+                        {fee.is_active === true ? "" : " (inactive; currently assigned)"}
+                      </option>
+                    ))}
+                </select>
+                {shippingFeesLoading ? (
+                  <small className="field-hint">Loading shipping fees…</small>
+                ) : shippingFeesError ? (
+                  <small className="field-hint" role="alert">
+                    Shipping fees could not be loaded. The current assignment will be preserved.{" "}
+                    <button type="button" className="text-action" onClick={onRetryShippingFees}>
+                      Try again
+                    </button>
+                  </small>
+                ) : shippingFees.length === 0 ? (
+                  <small className="field-hint">No active shipping fees are available.</small>
+                ) : null}
+              </label>
 
               <div className="field">
                 <span>Shell images</span>
@@ -312,32 +338,60 @@ export default function RecordModal({
               </div>
 
               {select(
-                "shell_type_id",
-                "Shell type",
-                types.map((type) => ({
-                  id: type.type_id,
-                  label: type.shell_type_name || type.type_id,
-                })),
-              )}
-
-              {select(
                 "shell_stock_type_id",
-                "Stock type",
+                "Stock unit type",
                 stocks.map((stock) => ({
                   id: stock.stock_id,
                   label: stock.stock_name || stock.stock_id,
                 })),
               )}
 
-              <label className="field">
-                <span>Note</span>
-                <textarea
-                  name="note"
-                  defaultValue={String(field("note"))}
-                  rows={3}
-                  placeholder="Additional observations"
-                />
-              </label>
+              <div className="field-grid">
+                {input("shell_weight", "Weight", { placeholder: "e.g. 20 g" })}
+                {select(
+                  "shell_weight_unit",
+                  "Weight unit (optional)",
+                  units
+                    .filter((unit) => unit.measurement_for === "weight")
+                    .map((unit) => ({ id: unit.unit_name || "", label: unit.unit_name || "" })),
+                )}
+                {input("shell_size", "Size", {
+                  placeholder: "e.g. 5–7 cm, approximately 3, or 2 × 4",
+                })}
+                {select(
+                  "shell_size_unit",
+                  "Size unit (optional)",
+                  units
+                    .filter((unit) => unit.measurement_for === "size")
+                    .map((unit) => ({ id: unit.unit_name || "", label: unit.unit_name || "" })),
+                )}
+              </div>
+
+              <button
+                className="secondary advanced-info-toggle"
+                type="button"
+                aria-expanded={showAdvancedInfo}
+                aria-controls="shell-advanced-information"
+                onClick={() => setShowAdvancedInfo((visible) => !visible)}
+              >
+                {showAdvancedInfo ? "Hide" : "Add Advance Information"}
+              </button>
+
+              {showAdvancedInfo && (
+                <div className="field-grid" id="shell-advanced-information">
+                  {input("author", "Author", { placeholder: "Species author" })}
+                  {input("deepness", "Deepness", { placeholder: "Depth or range" })}
+                  {input("from", "Source", { placeholder: "Source or provenance" })}
+                  {select(
+                    "locality_id",
+                    "Locality",
+                    localities.map((locality) => ({
+                      id: locality.locality_id,
+                      label: locality.locality || locality.locality_id,
+                    })),
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -368,6 +422,33 @@ export default function RecordModal({
                 >
                   <option value="size">Size</option>
                   <option value="weight">Weight</option>
+                </select>
+              </label>
+            </>
+          )}
+
+          {section === "shipping-fees" && (
+            <>
+              {input("shipping_name", "Shipping name", {
+                required: true,
+                placeholder: "e.g. Standard delivery",
+              })}
+              {input("shipping_fee", `Shipping fee${currency ? ` (${currency})` : ""}`, {
+                type: "number",
+                required: true,
+                step: "any",
+                min: "0",
+                placeholder: "0.00",
+              })}
+              <label className="field">
+                <span>Status</span>
+                <select
+                  name="is_active"
+                  defaultValue={edit ? String(field("is_active")) : "true"}
+                  required
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
                 </select>
               </label>
             </>
@@ -491,10 +572,25 @@ export default function RecordModal({
           <button className="primary" disabled={saving}>
             {saving && <LoaderCircle size={15} className="spin" />}
 
-            {edit ? "Save changes" : section === "images" ? "Upload image" : "Create record"}
+            {edit
+              ? "Save changes"
+              : section === "images"
+                ? "Upload image"
+                : section === "shipping-fees"
+                  ? "Add shipping fee"
+                  : "Create record"}
           </button>
         </div>
       </form>
     </div>
   );
+}
+
+function formatCurrency(amount: number, currency: string | null) {
+  if (!currency) return `${amount.toFixed(2)} (currency not set)`;
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
 }

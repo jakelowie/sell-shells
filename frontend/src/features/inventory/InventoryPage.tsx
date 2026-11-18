@@ -18,11 +18,20 @@ import {
   UserRoundCog,
   LogOut,
   ShoppingBag,
+  Truck,
   X,
 } from "lucide-react";
 import InventoryTable from "./components/InventoryTable";
 import RecordModal from "./components/RecordModal";
-import type { MeasurementUnit, Shell, ShellLocality, ShellType, StockType } from "../../shared/api";
+import type {
+  MeasurementUnit,
+  Shell,
+  ShellLocality,
+  ShellType,
+  ShippingFee,
+  StockType,
+} from "../../shared/api";
+import { getAllShippingFees, getShopConfig } from "../../shared/api";
 import {
   deleteInventoryRecord,
   getInventoryRecord,
@@ -48,6 +57,7 @@ const nav: { id: Section | "customers"; label: string; icon: typeof ShellIcon; g
   { id: "localities", label: "Localities", icon: MapPin, group: "CATALOGS" },
   { id: "stock-types", label: "Stock types", icon: Tags, group: "CATALOGS" },
   { id: "units", label: "Measurement units", icon: Tags, group: "CATALOGS" },
+  { id: "shipping-fees", label: "Shipping fees", icon: Truck, group: "CATALOGS" },
 ];
 const titles: Record<Section, { title: string; sub: string }> = {
   shells: { title: "Shell collection", sub: "A field guide to every shell in your collection." },
@@ -59,6 +69,10 @@ const titles: Record<Section, { title: string; sub: string }> = {
   units: {
     title: "Measurement units",
     sub: "Manage the unit labels used for shell size and weight.",
+  },
+  "shipping-fees": {
+    title: "Shipping Fee Management",
+    sub: "Manage shipping methods and fees assigned to shell listings.",
   },
 };
 
@@ -75,6 +89,10 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
     [types, setTypes] = useState<ShellType[]>([]),
     [localities, setLocalities] = useState<ShellLocality[]>([]),
     [units, setUnits] = useState<MeasurementUnit[]>([]),
+    [shippingFees, setShippingFees] = useState<ShippingFee[]>([]),
+    [shippingFeesLoading, setShippingFeesLoading] = useState(false),
+    [shippingFeesError, setShippingFeesError] = useState(""),
+    [currency, setCurrency] = useState<string | null>(null),
     [shellImages, setShellImages] = useState<import("../../shared/api").ShellImage[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -130,6 +148,23 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
   useEffect(() => {
     void loadLookups();
   }, [loadLookups]);
+  const loadShippingFees = useCallback(async () => {
+    setShippingFeesLoading(true);
+    setShippingFeesError("");
+    try {
+      setShippingFees(await getAllShippingFees());
+    } catch (e) {
+      setShippingFeesError((e as Error).message || "Could not load shipping fees.");
+    } finally {
+      setShippingFeesLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    void loadShippingFees();
+    getShopConfig()
+      .then((result) => setCurrency(result.data.currency))
+      .catch(() => setCurrency(null));
+  }, [loadShippingFees]);
   const notify = (msg: string) => {
     setToast(msg);
     window.setTimeout(() => setToast(""), 2600);
@@ -154,9 +189,18 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
       const state = dialog as { mode: "create" | "edit"; item?: Record<string, unknown> };
       await saveInventoryRecord(section, form, state);
       setDialog(null);
-      notify(state.mode === "edit" ? "Changes saved" : "Record created");
+      notify(
+        section === "shipping-fees"
+          ? state.mode === "edit"
+            ? "Shipping fee updated"
+            : "Shipping fee created"
+          : state.mode === "edit"
+            ? "Changes saved"
+            : "Record created",
+      );
       void load();
       void loadLookups();
+      if (section === "shipping-fees") void loadShippingFees();
     } finally {
       setSaving(false);
     }
@@ -166,9 +210,16 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
     if (!window.confirm(`Delete ${inventoryRecordLabel(section, item)}?`)) return;
     try {
       await deleteInventoryRecord(section, id);
-      notify(section === "shells" ? "Shell moved to deleted" : "Record deleted");
+      notify(
+        section === "shells"
+          ? "Shell moved to deleted"
+          : section === "shipping-fees"
+            ? "Shipping fee deleted"
+            : "Record deleted",
+      );
       void load();
       void loadLookups();
+      if (section === "shipping-fees") void loadShippingFees();
     } catch (e) {
       setError((e as Error).message);
     }
@@ -181,7 +232,7 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
           <div className="brand-mark">
             <ShellIcon size={21} />
           </div>
-          <span>shellhouse</span>
+          <span>craftshellhouse</span>
           <button className="mobile-close" onClick={() => setMobileNav(false)}>
             <X size={18} />
           </button>
@@ -332,7 +383,9 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
                 ? "Upload image"
                 : section === "shells"
                   ? "Add a shell"
-                  : "Add record"}
+                  : section === "shipping-fees"
+                    ? "Add shipping fee"
+                    : "Add record"}
             </button>
           </div>
 
@@ -366,11 +419,13 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
 
                 <input
                   placeholder={
-                    section === "shells"
-                      ? "Search by shell name..."
-                      : section === "images"
-                        ? "Search image file name..."
-                        : "Search records..."
+                    section === "shipping-fees"
+                      ? "Search shipping methods..."
+                      : section === "shells"
+                        ? "Search by shell name..."
+                        : section === "images"
+                          ? "Search image file name..."
+                          : "Search records..."
                   }
                   value={search}
                   onChange={(e) => {
@@ -450,6 +505,7 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
                 stocks={stocks}
                 types={types}
                 localities={localities}
+                currency={currency}
                 onEdit={beginEdit}
                 onDelete={remove}
               />
@@ -491,7 +547,7 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
           <footer>
             <span>Made for the love of little things.</span>
             <span>
-              Shellhouse <i>·</i> Inventory Studio
+              craftshellhouse <i>·</i> Inventory Studio
             </span>
           </footer>
         </div>
@@ -515,6 +571,11 @@ export default function InventoryPage({ onNavigate }: { onNavigate: (path: strin
           localities={localities}
           units={units}
           images={shellImages}
+          shippingFees={shippingFees}
+          shippingFeesLoading={shippingFeesLoading}
+          shippingFeesError={shippingFeesError}
+          onRetryShippingFees={() => void loadShippingFees()}
+          currency={currency}
           saving={saving}
           error={error}
           onClose={() => setDialog(null)}
